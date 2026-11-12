@@ -1,0 +1,30 @@
+# Segreti e configurazione locale
+.env
+.env.local
+*.pem
+*.key
+
+# .NET
+bin/
+obj/
+*.user
+.vs/
+TestResults/
+*.log
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+coverage/
+playwright-report/
+
+# Editor e sistema
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Output locali di strumenti
+graphify-out/
