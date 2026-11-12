@@ -8,7 +8,7 @@ Regole:
 - Un evento si può solo **estendere** con campi opzionali; un cambio incompatibile richiede una nuova `version`.
 - È l'unico codice che più servizi possono condividere.
 
-Formato (C# o schema JSON, o entrambi con generazione) da decidere con il primo servizio. Busta e convenzioni in [`ARCHITECTURE/02-communication.md`](../../../ARCHITECTURE/02-communication.md).
+Formato: record C# in `TriMetric.Contracts` (DEC-005), serializzati con `ContractJson.Options` (camelCase, enum come stringhe minuscole, `null` espliciti). Tipi: `EventEnvelope<T>`, `ActivityImported` (versione 1) con `ActivitySummary`, `LapData` e `StreamColumns` (stream a colonne), `Sport`, `EventNames` (nomi di evento, subject e stream `EVENTS`/`DLQ`), `StreamLimits` (massimo 100.000 punti). L'arrotondamento dei valori dello stream (DEC-012) è un obbligo del produttore (ingestion), non applicato dal contratto. Busta e convenzioni in [`ARCHITECTURE/02-communication.md`](../../../ARCHITECTURE/02-communication.md).
 
 ## Eventi previsti
 

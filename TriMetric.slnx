@@ -1,2 +1,8 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/shared/contracts/TriMetric.Contracts/TriMetric.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/shared/contracts/tests/TriMetric.Contracts.Tests/TriMetric.Contracts.Tests.csproj" />
+  </Folder>
 </Solution>

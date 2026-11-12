@@ -159,7 +159,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T02: Progetto `contracts` con busta ed evento
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-004, REQ-036 (formato), DEC-005, DEC-012
 **Depends on:** T01
 **Tier:** strong — definisce il contratto tra servizi (API pubblica interna).
@@ -259,6 +259,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — consistenza transazionale e contratto operativo di NATS.
 
 **Action:**
+- I subject degli stream si leggono da `EventNames.EventsStreamSubjects` e `EventNames.DlqStreamSubjects` (T02, oggi `static readonly string[]` mutabili): copiarli prima di passarli a NATS.Net e valutare se renderli `IReadOnlyList<string>` secondo ciò che accetta `StreamConfig.Subjects`.
 - `TriMetric.Messaging`: `AddNatsMessaging` (connessione con `Nats:Url`, riconnessione automatica, creazione idempotente degli stream `EVENTS` con i prefissi espliciti `identity.>`, `ingestion.>`, `activities.>`, `analytics.>`, `training-plan.>` e `DLQ` con `dlq.>`, persistenza su file, finestra di deduplicazione di 1 ora).
 - Outbox: entità `OutboxMessage` (`Id`, `Subject`, `Type`, `Payload` bytea, `CreatedAt`, `PublishedAt?`, `Attempts`, `LastError?`), `ApplyOutbox` (tabella `outbox` con indice parziale sui non pubblicati), `IOutbox.Add` (nel change tracker; scrittura con il `SaveChanges` del chiamante, quindi nella stessa transazione).
 - Test (con le fixture di T04): creazione degli stream riuscita, **ripetibile** (idempotente) e senza sovrapposizione di subject (un messaggio su `dlq.x` non finisce in `EVENTS`); `IOutbox.Add` + `SaveChanges` salva evento e dati di dominio in una sola transazione (un fallimento a metà non lascia una riga di outbox orfana).
@@ -487,7 +488,8 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Action:**
 - `ActivityImportedHandler : IEventHandler<ActivityImported>` registrato con `AddEventConsumer` (consumatore durevole `activities-activity-imported`, subject `ingestion.activity.imported`, `MaxDeliver` 5, backoff crescente): in una transazione inserisce l'attività con `ON CONFLICT (user_id, source, external_id) DO NOTHING` (nessun errore ritentato se esiste già), poi giri e punti (`StreamWriter`) solo se l'attività è stata inserita.
-- Test (fixture T04): evento valido → attività, giri e punti salvati; lo stesso evento due volte → un'attività; due eventi con lo stesso `externalId` e id diversi → una sola attività e punti non duplicati; evento con 100.000 punti → tutti salvati; evento non valido → DLQ dopo `MaxDeliver`.
+- **Validazione esplicita dell'evento** (la deserializzazione di `System.Text.Json` non la fa: `data` o `stream` possono arrivare `null`, uno `sport` mancante diventa `run`, colonne di lunghezza diversa passano): il gestore rifiuta un evento con `Data`/`Stream` nulli, colonne non lunghe quanto `TimeOffsetSeconds`, più di `StreamLimits.MaxPoints` punti o `sport` non valido; l'eccezione di validazione porta il messaggio direttamente in `DLQ`, senza ripetizioni.
+- Test (fixture T04): evento valido → attività, giri e punti salvati; lo stesso evento due volte → un'attività; due eventi con lo stesso `externalId` e id diversi → una sola attività e punti non duplicati; evento con 100.000 punti → tutti salvati; evento non valido (colonne di lunghezza diversa, `data` nullo, troppi punti) → DLQ.
 
 **Test cycle:**
 1. Scrivere i test.
