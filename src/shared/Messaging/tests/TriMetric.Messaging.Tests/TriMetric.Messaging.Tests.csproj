@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="NATS.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\TriMetric.Messaging\TriMetric.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\contracts\TriMetric.Contracts\TriMetric.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\..\tests\TriMetric.TestInfrastructure\TriMetric.TestInfrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

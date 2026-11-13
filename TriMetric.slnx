@@ -2,10 +2,12 @@
   <Folder Name="/src/">
     <Project Path="src/shared/contracts/TriMetric.Contracts/TriMetric.Contracts.csproj" />
     <Project Path="src/shared/ServiceDefaults/TriMetric.ServiceDefaults/TriMetric.ServiceDefaults.csproj" />
+    <Project Path="src/shared/Messaging/TriMetric.Messaging/TriMetric.Messaging.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="src/shared/contracts/tests/TriMetric.Contracts.Tests/TriMetric.Contracts.Tests.csproj" />
     <Project Path="src/shared/ServiceDefaults/tests/TriMetric.ServiceDefaults.Tests/TriMetric.ServiceDefaults.Tests.csproj" />
+    <Project Path="src/shared/Messaging/tests/TriMetric.Messaging.Tests/TriMetric.Messaging.Tests.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure/TriMetric.TestInfrastructure.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure.Tests/TriMetric.TestInfrastructure.Tests.csproj" />
   </Folder>

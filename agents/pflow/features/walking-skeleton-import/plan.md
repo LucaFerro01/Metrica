@@ -117,7 +117,9 @@ public interface IOutbox { void Add<T>(string subject, EventEnvelope<T> envelope
 public interface IOutboxDbContext { DbSet<OutboxMessage> Outbox { get; } }
 ModelBuilder ApplyOutbox(this ModelBuilder b);                                // tabella `outbox` nello schema del servizio
 IServiceCollection AddNatsMessaging(this IServiceCollection s, IConfiguration c);       // "Nats:Url"; crea EVENTS e DLQ
+IServiceCollection AddOutbox<TDbContext>(this IServiceCollection s) where TDbContext : DbContext, IOutboxDbContext;       // (T05) registra IOutbox scoped; un solo contesto per servizio
 IServiceCollection AddOutboxRelay<TDbContext>(this IServiceCollection s) where TDbContext : DbContext, IOutboxDbContext; // "Outbox:PollIntervalMs" (predefinito 500)
+public interface INatsStreamsReadiness { bool IsReady { get; } Task WhenReadyAsync(CancellationToken ct); }   // (T05) il relay aspetta gli stream
 public interface IEventHandler<T> { Task HandleAsync(EventEnvelope<T> envelope, CancellationToken ct); }
 IServiceCollection AddEventConsumer<TDbContext, TData, THandler>(this IServiceCollection s, ConsumerOptions o)
     where TDbContext : DbContext, IInboxDbContext where THandler : class, IEventHandler<TData>;
@@ -254,7 +256,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T05: `Messaging` — client NATS, stream e outbox
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-012, REQ-036; DEC-001, DEC-005, DEC-012
 **Depends on:** T02, T04
 **Tier:** strong — consistenza transazionale e contratto operativo di NATS.
@@ -289,6 +291,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — concorrenza e consegna senza perdite né doppioni.
 
 **Action:**
+- Fixture: i test di Messaging di T05 usano `IClassFixture<TimescaleFixture>` per la classe `OutboxTests` (un contenitore per classe); da T06/T07 le nuove classi di test **condividono una collection fixture** per Timescale e per NATS (esiste già `NatsCollection`), così non si avviano contenitori in più; eventualmente sposta anche `OutboxTests` nella collection.
 - `OutboxRelay<TDbContext>` (`BackgroundService`): ogni `Outbox:PollIntervalMs` (500 ms predefiniti) legge i messaggi non pubblicati in ordine di creazione con `FOR UPDATE SKIP LOCKED`, pubblica su JetStream con `Nats-Msg-Id` = id dell'evento, attende l'ack, marca `PublishedAt`; in caso di errore incrementa `Attempts`, registra `LastError` e riprova con attesa crescente. Un crash tra pubblicazione e marcatura non produce doppioni entro la finestra di deduplicazione.
 - Test (fixture T04): pubblicazione a regime con latenza < 2 s; NATS fermato durante `Add`+`SaveChanges`, poi riavviato → il messaggio arriva **una sola volta**; due istanze del relay non duplicano; un messaggio da circa 6 MB è pubblicato.
 
@@ -380,7 +383,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — migrazione di schema e isolamento dei dati.
 
 **Action:**
-- Host web in `TriMetric.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
+- Host web in `TriMetric.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutbox<IngestionDbContext>()` (senza di esso `IOutbox` non è registrato e T10 fallirebbe a runtime), `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
 - `IngestionDbContext` (`HasDefaultSchema("ingestion")`, `UseSnakeCaseNamingConvention()`, `MigrationsHistoryTable("__EFMigrationsHistory","ingestion")`, `ApplyOutbox`, entità `Upload`), `IDesignTimeDbContextFactory<IngestionDbContext>` con stringa di sola progettazione, stringa di connessione `ConnectionStrings:Ingestion` (ruolo `ingestion_svc`).
 - Test: avvio con migrazioni su `TimescaleFixture` (ruolo `ingestion_svc`); la tabella di storia sta in `ingestion`; il ruolo non vede lo schema `activities`; test sul solo bind loopback (`appsettings.json` ha solo `http://127.0.0.1:5081`); in `Production` un endpoint protetto di prova risponde 401.
 - REQ-034: l'`appsettings` del servizio non deve contenere regole di livello specifiche del provider (`Logging:Console:LogLevel:*`) che riattivino il log della query string di `Microsoft.AspNetCore.Hosting.Diagnostics` (il filtro Warning è impostato da `AddServiceDefaults`; una regola specifica del provider lo sovrascriverebbe): aggiungere un test che legge `appsettings*.json` del servizio e lo verifica. Le tracce OpenTelemetry di ASP.NET Core registrano `url.query`: nessun dato personale in query string degli endpoint (i parametri sensibili vanno nel corpo).
@@ -391,7 +394,9 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
   - indice univoco `ux_uploads_user_source_external` su (`user_id`, `source`, `external_id`);
   - tabella `ingestion.outbox`: `id` uuid PK; `subject` text non nulla; `type` text non nulla; `payload` bytea non nulla; `created_at` timestamptz non nulla; `published_at` timestamptz nulla; `attempts` integer non nulla (predefinito 0); `last_error` text nulla;
   - indice parziale `ix_outbox_unpublished` su `created_at` dove `published_at IS NULL`;
-  - tabella di storia `ingestion."__EFMigrationsHistory"`.
+  - tabella di storia `ingestion."__EFMigrationsHistory"`;
+  - operazione `EnsureSchema("ingestion")` generata da `HasDefaultSchema` (con Npgsql è un blocco `DO` con controllo di esistenza: no-op su uno schema già creato dallo script di init; è un'operazione **pianificata**, non da trattare come estranea nel controllo di ambito).
+  - Nomi di PK come generati da EF con `UseSnakeCaseNamingConvention` (es. `pk_uploads`, `pk_outbox`).
   - Nessuna operazione di dati, nessun `DROP`, nessun `RENAME`.
 
 **Test cycle:**
@@ -462,7 +467,9 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
   - tabella `activities.activity_stream`: `activity_id` uuid non nulla; `time` timestamptz non nulla; `latitude`, `longitude`, `altitude_meters`, `heart_rate`, `power_watts`, `cadence`, `speed_mps` double precision nulle; **nessuna chiave primaria**; indice non univoco `ix_activity_stream_activity_time` su (`activity_id`, `time`);
   - passo DDL: `SELECT create_hypertable('activities.activity_stream', 'time')`;
   - tabella `activities.inbox`: `message_id` uuid PK; `consumer` text non nulla; `processed_at` timestamptz non nulla;
-  - tabella di storia `activities."__EFMigrationsHistory"`.
+  - tabella di storia `activities."__EFMigrationsHistory"`;
+  - operazione `EnsureSchema("activities")` generata da `HasDefaultSchema` (no-op su schema esistente; operazione **pianificata**);
+  - nomi di PK come generati da EF con `UseSnakeCaseNamingConvention`.
   - Nessun `DROP` né `RENAME`.
 
 **Test cycle:**
