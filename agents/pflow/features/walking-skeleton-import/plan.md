@@ -378,13 +378,13 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T09: `ingestion` — host, persistenza e migrazione
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-012, REQ-021, REQ-023, REQ-024; DEC-001, DEC-003, DEC-006, DEC-009, DEC-014
 **Depends on:** T03, T05, T06, T08
 **Tier:** strong — migrazione di schema e isolamento dei dati.
 
 **Action:**
-- Host web in `TriMetric.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutbox<IngestionDbContext>()` (senza di esso `IOutbox` non è registrato e T10 fallirebbe a runtime), `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
+- Host web in `TriMetric.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutbox<IngestionDbContext>()` (senza di esso `IOutbox` non è registrato e T10 fallirebbe a runtime), `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`, **solo in Development**: deviazione consapevole registrata in T09; REQ-019 non impone l'esposizione in altri ambienti e gli script di generazione del client avviano i servizi in Development), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
 - `IngestionDbContext` (`HasDefaultSchema("ingestion")`, `UseSnakeCaseNamingConvention()`, `MigrationsHistoryTable("__EFMigrationsHistory","ingestion")`, `ApplyOutbox`, entità `Upload`), `IDesignTimeDbContextFactory<IngestionDbContext>` con stringa di sola progettazione, stringa di connessione `ConnectionStrings:Ingestion` (ruolo `ingestion_svc`).
 - Test: avvio con migrazioni su `TimescaleFixture` (ruolo `ingestion_svc`); la tabella di storia sta in `ingestion`; il ruolo non vede lo schema `activities`; test sul solo bind loopback (`appsettings.json` ha solo `http://127.0.0.1:5081`); in `Production` un endpoint protetto di prova risponde 401.
 - REQ-034: l'`appsettings` del servizio non deve contenere regole di livello specifiche del provider (`Logging:Console:LogLevel:*`) che riattivino il log della query string di `Microsoft.AspNetCore.Hosting.Diagnostics` (il filtro Warning è impostato da `AddServiceDefaults`; una regola specifica del provider lo sovrascriverebbe): aggiungere un test che legge `appsettings*.json` del servizio e lo verifica. Le tracce OpenTelemetry di ASP.NET Core registrano `url.query`: nessun dato personale in query string degli endpoint (i parametri sensibili vanno nel corpo).

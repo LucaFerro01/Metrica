@@ -1,15 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <!-- Servizio ingestion. In questa fase contiene solo il parsing dei file GPX e FIT dietro IActivityFileParser;
-       l'host web, la persistenza e l'upload arrivano con i task successivi. I parser non referenziano il logging
-       di proposito: nessun dato del file deve poter uscire (REQ-034). -->
+  <!-- Servizio ingestion: host web, persistenza (schema "ingestion") e parsing dei file GPX e FIT dietro IActivityFileParser.
+       L'endpoint di upload arriva con T10. I parser non referenziano il logging di proposito: nessun dato del file
+       deve poter uscire (REQ-034). -->
 
   <ItemGroup>
     <PackageReference Include="Garmin.FIT.Sdk" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Solo strumenti di progettazione (dotnet ef): non deve propagarsi ai progetti che referenziano il servizio. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\shared\contracts\TriMetric.Contracts\TriMetric.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\ServiceDefaults\TriMetric.ServiceDefaults\TriMetric.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\Messaging\TriMetric.Messaging\TriMetric.Messaging.csproj" />
   </ItemGroup>
 
 </Project>
