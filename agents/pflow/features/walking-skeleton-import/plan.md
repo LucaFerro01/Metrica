@@ -285,7 +285,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T06: `Messaging` — relay dell'outbox
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-012, REQ-013; AC-005; DEC-001
 **Depends on:** T05
 **Tier:** strong — concorrenza e consegna senza perdite né doppioni.

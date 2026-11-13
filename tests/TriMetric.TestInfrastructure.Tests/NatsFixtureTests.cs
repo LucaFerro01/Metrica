@@ -25,6 +25,51 @@ public sealed class NatsFixtureTests(NatsFixture nats) : IClassFixture<NatsFixtu
     }
 
     [Fact]
+    public void Fixture_UsesHostPortsInTheStableRange()
+    {
+        var client = new Uri(nats.Url).Port;
+        var monitor = new Uri(nats.MonitorUrl).Port;
+
+        Assert.NotEqual(client, monitor);
+        Assert.InRange(client, FreePortAllocator.RangeStart, FreePortAllocator.RangeEnd);
+        Assert.InRange(monitor, FreePortAllocator.RangeStart, FreePortAllocator.RangeEnd);
+    }
+
+    [Fact]
+    public async Task EnsureRunning_WhenAlreadyRunning_DoesNothing_AndAfterStopRestartsOnTheSameUrl()
+    {
+        var url = nats.Url;
+
+        await nats.EnsureRunningAsync();
+        await nats.StopAsync();
+        await nats.EnsureRunningAsync();
+
+        Assert.Equal(url, nats.Url);
+        await using var connection = Connect();
+        await connection.ConnectAsync();
+    }
+
+    [Fact]
+    public async Task WhileStopped_ThePortsStayReservedAgainstOtherProcesses()
+    {
+        var port = new Uri(nats.Url).Port;
+        await nats.StopAsync();
+        try
+        {
+            var other = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, port);
+
+            Assert.Throws<System.Net.Sockets.SocketException>(other.Start);
+        }
+        finally
+        {
+            await nats.EnsureRunningAsync();
+        }
+
+        await using var connection = Connect();
+        await connection.ConnectAsync();
+    }
+
+    [Fact]
     public async Task Server_AdvertisesEightMegabyteMaxPayload()
     {
         await using var connection = Connect();

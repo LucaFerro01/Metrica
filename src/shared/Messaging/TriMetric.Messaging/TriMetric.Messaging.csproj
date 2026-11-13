@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Formula del backoff e classificazione degli errori del relay sono verificate direttamente dai test. -->
+    <InternalsVisibleTo Include="TriMetric.Messaging.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\contracts\TriMetric.Contracts\TriMetric.Contracts.csproj" />
   </ItemGroup>
 

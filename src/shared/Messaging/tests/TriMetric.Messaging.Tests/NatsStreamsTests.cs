@@ -273,16 +273,6 @@ public sealed class NatsStreamsTests(NatsFixture nats)
         }
     }
 
-    /// <summary>Se un test fallisce a NATS fermo, gli altri test della collection devono trovarlo acceso.</summary>
-    private async Task EnsureNatsRunningAsync()
-    {
-        try
-        {
-            await nats.StartAsync();
-        }
-        catch (Exception)
-        {
-            // Il container e gia avviato (StartAsync e idempotente solo in parte): lo stato verra rilevato dai test successivi.
-        }
-    }
+    /// <summary>Se un test fallisce a NATS fermo, gli altri test della collection devono trovarlo acceso (errori non ingoiati).</summary>
+    private Task EnsureNatsRunningAsync() => nats.EnsureRunningAsync();
 }

@@ -9,8 +9,9 @@ using Xunit;
 namespace TriMetric.Messaging.Tests;
 
 /// <summary>Outbox transazionale e forma della tabella <c>ingestion.outbox</c> (REQ-012, DEC-001).</summary>
+[Collection(NatsCollection.Name)]
 [Trait("Category", "Outbox")]
-public sealed class OutboxTests(TimescaleFixture db) : IClassFixture<TimescaleFixture>, IAsyncLifetime
+public sealed class OutboxTests(TimescaleFixture db) : IAsyncLifetime
 {
     private const string Subject = "ingestion.activity.imported";
 
