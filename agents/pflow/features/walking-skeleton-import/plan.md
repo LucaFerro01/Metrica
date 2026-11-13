@@ -344,7 +344,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T08: Parser GPX e FIT in `ingestion`
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-007, REQ-008, REQ-010, REQ-031, REQ-035 (conteggio punti), REQ-036 (arrotondamento); AC-002, AC-014; DEC-002, DEC-012
 **Depends on:** T02
 **Tier:** strong — input non attendibile (XML/binario), rischio di DoS e specifica con casi ambigui.

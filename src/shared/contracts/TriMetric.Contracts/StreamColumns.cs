@@ -11,7 +11,7 @@ namespace TriMetric.Contracts;
 /// Tempo a 0,001 s; latitudine e longitudine a 7 decimali; quota a 0,1 m; velocita' a 0,001 m/s;
 /// frequenza cardiaca, potenza e cadenza a numeri interi.
 /// </remarks>
-/// <param name="TimeOffsetSeconds">Secondi dall'inizio dell'attivita'.</param>
+/// <param name="TimeOffsetSeconds">Secondi dall'inizio dell'attivita': valori non negativi e <b>non decrescenti</b> (due punti con lo stesso istante restano entrambi).</param>
 /// <param name="Latitude">Latitudine in gradi decimali.</param>
 /// <param name="Longitude">Longitudine in gradi decimali.</param>
 /// <param name="AltitudeMeters">Quota in metri.</param>

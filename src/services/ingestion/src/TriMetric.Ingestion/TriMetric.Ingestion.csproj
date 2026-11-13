@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Servizio ingestion. In questa fase contiene solo il parsing dei file GPX e FIT dietro IActivityFileParser;
+       l'host web, la persistenza e l'upload arrivano con i task successivi. I parser non referenziano il logging
+       di proposito: nessun dato del file deve poter uscire (REQ-034). -->
+
+  <ItemGroup>
+    <PackageReference Include="Garmin.FIT.Sdk" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\shared\contracts\TriMetric.Contracts\TriMetric.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
