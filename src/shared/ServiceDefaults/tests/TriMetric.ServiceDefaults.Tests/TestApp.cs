@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -49,6 +50,11 @@ internal static class TestApp
         app.MapPost("/me", (ClaimsPrincipal user) => user.GetUserId().ToString())
             .RequireAuthorization();
         app.MapGet("/open", () => "open");
+        app.MapGet("/correlation", (HttpContext context, ILoggerFactory loggers) =>
+        {
+            loggers.CreateLogger("Test").LogInformation("richiesta elaborata");
+            return context.GetCorrelationId().ToString();
+        });
         app.MapMethods("/log", ["GET", "POST"], (ILoggerFactory loggers) =>
         {
             loggers.CreateLogger("Test").LogInformation("richiesta elaborata");

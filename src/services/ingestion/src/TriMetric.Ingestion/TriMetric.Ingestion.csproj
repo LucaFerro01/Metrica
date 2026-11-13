@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!-- Servizio ingestion: host web, persistenza (schema "ingestion") e parsing dei file GPX e FIT dietro IActivityFileParser.
-       L'endpoint di upload arriva con T10. I parser non referenziano il logging di proposito: nessun dato del file
+       Endpoint di upload (T10) e deduplicazione con outbox. I parser non referenziano il logging di proposito: nessun dato del file
        deve poter uscire (REQ-034). -->
 
   <ItemGroup>

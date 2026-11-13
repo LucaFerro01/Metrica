@@ -235,13 +235,40 @@ public class ParserSupportTests
     // ---- Nessun logging
 
     [Fact]
-    public void IngestionAssembly_DoesNotReferenceLogging()
+    public void ParserCode_DoesNotUseLogging()
     {
+        // Da T10 l'assembly contiene anche l'endpoint di upload, che registra solo l'esito (REQ-034) e quindi usa
+        // ILogger: il divieto vale per il CODICE DEI PARSER (nessun log di dati del file), non piu' per l'intero assembly.
         var references = typeof(GpxParser).Assembly.GetReferencedAssemblies().Select(a => a.Name!).ToList();
-
-        Assert.DoesNotContain(references, n => n.Contains("Logging", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(references, n => n.Contains("Serilog", StringComparison.OrdinalIgnoreCase));
         Assert.DoesNotContain(references, n => n.Contains("OpenTelemetry", StringComparison.OrdinalIgnoreCase));
+
+        var parserFiles = Directory.GetFiles(Path.Combine(ServicePaths.ProjectDirectory, "Parsing"), "*.cs")
+            .Concat(new[] { "IActivityFileParser.cs", "ActivityFileException.cs", "ParsedActivity.cs" }.Select(f => Path.Combine(ServicePaths.ProjectDirectory, f)))
+            .ToList();
+        Assert.True(parserFiles.Count >= 8, "i file dei parser devono essere trovati");
+        foreach (var file in parserFiles)
+        {
+            var text = File.ReadAllText(file);
+            foreach (var forbidden in new[] { "ILogger", "Logging", "LogInformation", "LogWarning", "LogError", "LogDebug", "Serilog", "OpenTelemetry", "Console.Write", "Console.Error", "Console.Out", "Debug.Write", "Trace.Write" })
+            {
+                Assert.False(text.Contains(forbidden, StringComparison.Ordinal), $"{Path.GetFileName(file)} usa '{forbidden}': i parser non scrivono log.");
+            }
+        }
+
+        // Anche nelle firme: nessun campo, costruttore o metodo dei tipi dei parser dipende da tipi di logging.
+        var parserTypes = typeof(GpxParser).Assembly.GetTypes()
+            .Where(t => t.Namespace == "TriMetric.Ingestion.Parsing" || t == typeof(ParsedActivity) || t == typeof(ActivityFileException));
+        const System.Reflection.BindingFlags all = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic
+            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly;
+        foreach (var type in parserTypes)
+        {
+            var used = type.GetFields(all).Select(f => f.FieldType)
+                .Concat(type.GetProperties(all).Select(x => x.PropertyType))
+                .Concat(type.GetConstructors(all).SelectMany(c => c.GetParameters().Select(x => x.ParameterType)))
+                .Concat(type.GetMethods(all).SelectMany(m => m.GetParameters().Select(x => x.ParameterType).Append(m.ReturnType)));
+            Assert.DoesNotContain(used, t => (t.Namespace ?? "").StartsWith("Microsoft.Extensions.Logging", StringComparison.Ordinal));
+        }
     }
 
     // ---- Uso concorrente (T10 puo' registrare i parser come singleton)

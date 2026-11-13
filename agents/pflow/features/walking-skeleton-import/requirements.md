@@ -199,7 +199,7 @@ Il repository contiene solo documentazione (`README.md`, `ARCHITECTURE/`), i REA
 ## Assumptions
 
 - **Target framework:** .NET 10 (LTS) come da ADR 0001 ("ultima LTS"). Sulla macchina è installato l'SDK 11.0.100 (nessun SDK 10) e i runtime 10 e 11: l'SDK 11 compila per `net10.0`. `global.json` fissa l'SDK installato (11.0.100); se si preferisce installare l'SDK 10, il target non cambia.
-- **Limite di upload:** 25 MB predefinito, configurabile; tempo massimo di parsing 30 secondi, configurabile.
+- **Limite di upload:** 32 MiB predefinito (era 25 MB: un GPX da 100.000 punti con tutte le colonne pesa circa 26,3 MiB, 29,3 MiB se indentato, e AC-014 lo richiede), configurabile fino a 64 MiB; tempo massimo di parsing 30 secondi, configurabile.
 - **Identità di sviluppo:** attiva solo con ambiente `Development`; sarà sostituita da `identity` in una feature successiva senza cambiare i contratti degli endpoint.
 - **Sport da FIT/GPX:** `run`, `ride`, `swim` mappati dal campo sport del FIT o dal tipo della traccia GPX; in assenza, `other`.
 - **Ambiente di esecuzione:** i servizi girano sul PC dello sviluppatore con .NET SDK; solo database e bus sono in contenitori.

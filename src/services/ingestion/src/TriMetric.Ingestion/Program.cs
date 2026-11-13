@@ -32,7 +32,16 @@ builder.Services.AddOutboxRelay<IngestionDbContext>();
 builder.Services.AddSingleton<IActivityFileParser, GpxParser>();
 builder.Services.AddSingleton<IActivityFileParser, FitParser>();
 
-builder.Services.AddOpenApi();
+// Opzioni dell'upload (Upload:MaxBytes, Upload:ParseTimeoutSeconds), validate all'avvio. I valori si leggono alla prima
+// risoluzione (non qui): un override aggiunto dopo la registrazione (WebApplicationFactory) e' rispettato.
+builder.Services.AddOptions<UploadOptions>()
+    .BindConfiguration(UploadOptions.SectionName)
+    .Validate(
+        o => o.IsValid(),
+        $"Upload: MaxBytes deve essere tra 1 e {UploadOptions.MaxBytesCeiling} e ParseTimeoutSeconds tra 1 e {UploadOptions.ParseTimeoutCeilingSeconds}.")
+    .ValidateOnStart();
+
+builder.Services.AddOpenApi(options => options.AddUploadRequestBody());
 
 // /health/ready: solo il database. NATS non e' un controllo di prontezza (REQ-013).
 builder.Services.AddHealthChecks()
@@ -50,6 +59,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapServiceDefaults();
+app.MapUploadEndpoint();
 
 app.Run();
 

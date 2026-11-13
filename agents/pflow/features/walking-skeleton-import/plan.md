@@ -418,7 +418,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T10: `ingestion` — endpoint di upload, validazione, deduplicazione e outbox
 
-**Status:** pending
+**Status:** completed (limite predefinito 32 MiB dopo la revisione; vedi `context.md`)
 **Covers:** REQ-006, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-021, REQ-022, REQ-031, REQ-035; AC-001, AC-003, AC-004, AC-005, AC-009; DEC-005, DEC-006, DEC-007, DEC-012
 **Depends on:** T08, T09
 **Tier:** strong — upload di file non attendibili, transazione dedup+outbox, concorrenza.
@@ -555,7 +555,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Action:**
 - Creare `TriMetric.Gateway` con `AddServiceDefaults`, `Yarp.ReverseProxy` e Kestrel su `localhost:5080`. Rotte: `/api/ingestion/{**remainder}` → `http://127.0.0.1:5081/{**remainder}`; `/api/activities` e `/api/activities/{**remainder}` → `http://127.0.0.1:5082/activities/{**remainder}` (trasformazioni dei percorsi). Le intestazioni di identità del client (`X-User-Id` e simili) vengono rimosse; `Authorization` passa.
-- Limite del corpo allineato a `Upload:MaxBytes`; `/health/live`.
+- Limite del corpo allineato a `Upload:MaxBytes` (predefinito **32 MiB = 33.554.432** dopo la revisione di T10) più 1 MiB di overhead multipart per la richiesta attraverso il gateway; `/health/live`. Il controllo lato client del web (T17) usa lo stesso limite di 32 MiB.
 - Test con server di prova al posto dei servizi: `POST /api/ingestion/uploads`, `GET /api/activities`, `GET /api/activities/{id}` arrivano ai backend con il percorso atteso (con e senza barra finale); un `X-User-Id` del client non raggiunge i backend; il corpo multipart arriva integro.
 
 **Test cycle:**
