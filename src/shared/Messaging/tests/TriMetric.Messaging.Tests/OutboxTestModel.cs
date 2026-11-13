@@ -15,13 +15,16 @@ public sealed class TestItem
 public sealed record TestPayload(string Name, int Count);
 
 /// <summary>
-/// Contesto di prova configurato come i servizi: schema predefinito <c>ingestion</c>, snake_case, <c>ApplyOutbox</c>.
+/// Contesto di prova configurato come i servizi: schema predefinito <c>ingestion</c>, snake_case, <c>ApplyOutbox</c>
+/// e <c>ApplyInbox</c>.
 /// </summary>
-public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options), IOutboxDbContext
+public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbContext(options), IOutboxDbContext, IInboxDbContext
 {
     public DbSet<TestItem> Items => Set<TestItem>();
 
     public DbSet<OutboxMessage> Outbox => Set<OutboxMessage>();
+
+    public DbSet<InboxMessage> Inbox => Set<InboxMessage>();
 
     public static DbContextOptions<TestDbContext> OptionsFor(string connectionString) =>
         new DbContextOptionsBuilder<TestDbContext>()
@@ -39,6 +42,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbC
             e.HasIndex(x => x.Code).IsUnique();
         });
         modelBuilder.ApplyOutbox();
+        modelBuilder.ApplyInbox();
     }
 
     /// <summary>
@@ -53,7 +57,12 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options) : DbC
         await using var connection = new NpgsqlConnection(ownerConnectionString);
         await connection.OpenAsync();
         await using var command = new NpgsqlCommand(
-            "DROP TABLE IF EXISTS ingestion.outbox; DROP TABLE IF EXISTS ingestion.test_items;" + script,
+            "DROP TABLE IF EXISTS ingestion.outbox; DROP TABLE IF EXISTS ingestion.inbox; DROP TABLE IF EXISTS ingestion.test_items;"
+            // Tabella fuori dal modello con un vincolo di unicita' DIFFERITO: la violazione emerge solo al COMMIT
+            // (serve a provare che l'ack non precede il commit).
+            + " DROP TABLE IF EXISTS ingestion.test_deferred;"
+            + " CREATE TABLE ingestion.test_deferred (code text NOT NULL, CONSTRAINT uq_test_deferred UNIQUE (code) DEFERRABLE INITIALLY DEFERRED);"
+            + script,
             connection);
         await command.ExecuteNonQueryAsync();
     }

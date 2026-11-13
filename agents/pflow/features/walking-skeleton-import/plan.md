@@ -313,13 +313,14 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T07: `Messaging` — consumatore idempotente con retry e DLQ
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-014, REQ-015, REQ-017; AC-006, AC-012; DEC-001, DEC-005
 **Depends on:** T05
 **Tier:** strong — idempotenza, concorrenza e gestione dei fallimenti.
 
 **Action:**
-- `InboxMessage` (`MessageId` PK, `Consumer`, `ProcessedAt`), `ApplyInbox`, `IInboxDbContext`.
+- `InboxMessage` (`MessageId`, `Consumer`, `ProcessedAt`; **PK composta (`Consumer`, `MessageId`)**), `ApplyInbox` (tabella `inbox`, colonne esplicite `message_id`, `consumer`, `processed_at`), `IInboxDbContext { DbSet<InboxMessage> Inbox }`; `EventValidationException` pubblica: un gestore la lancia per mandare un evento non valido direttamente in DLQ senza ritentare (la usa T12).
+- Decisione registrata in T07: `MaxAckPending = MaxConcurrency` è TENUTO. Un messaggio che fallisce di continuo occupa lo slot per la durata del backoff (circa 18 s più la DLQ con il backoff predefinito): "non bloccano gli altri" significa "con ritardo limitato". L'alternativa (MaxAckPending più alto con buffering lato client) rischia riconsegne spurie e falsi poison pill. I test di integrazione (T12, T15) usano un `Backoff` breve.
 - `AddEventConsumer<TDbContext,TData,THandler>`: consumatore durevole (nome, filtro di subject, `MaxDeliver`, backoff, `AckWait` da `ConsumerOptions`). Per ogni messaggio: deserializza la busta; il gestore è risolto **dallo stesso scope e `DbContext`** dell'inbox; in **una sola transazione** inserisce l'id nell'inbox (vincolo di unicità) ed esegue il gestore; un duplicato (id già presente) è confermato senza eseguire il gestore; `Ack` solo dopo il commit. Durante l'elaborazione lunga invia `AckProgress` per non scadere `AckWait`.
 - Una violazione di unicità sui dati di dominio che il gestore tratta come "già presente" è un no-op, non un errore da ritentare (il gestore usa `ON CONFLICT DO NOTHING`).
 - Fallimento: `NakWithDelay` con attesa crescente; superato `MaxDeliver` (da metadati di consegna) il messaggio originale e il motivo vanno su `DLQ` (subject `dlq.<consumatore>`) e il messaggio è terminato (`Term`) senza bloccare i successivi. Messaggio malformato → direttamente in `DLQ`.
@@ -466,7 +467,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
   - tabella `activities.activity_laps`: `id` uuid PK; `activity_id` uuid non nulla (FK → `activities.activities.id`, ON DELETE CASCADE); `start_time` timestamptz non nulla; `elapsed_seconds`, `distance_meters` double precision non nulle; indice su `activity_id`;
   - tabella `activities.activity_stream`: `activity_id` uuid non nulla; `time` timestamptz non nulla; `latitude`, `longitude`, `altitude_meters`, `heart_rate`, `power_watts`, `cadence`, `speed_mps` double precision nulle; **nessuna chiave primaria**; indice non univoco `ix_activity_stream_activity_time` su (`activity_id`, `time`);
   - passo DDL: `SELECT create_hypertable('activities.activity_stream', 'time')`;
-  - tabella `activities.inbox`: `message_id` uuid PK; `consumer` text non nulla; `processed_at` timestamptz non nulla;
+  - tabella `activities.inbox`: `message_id` uuid non nulla; `consumer` text non nulla; `processed_at` timestamptz non nulla; **PK composta (`consumer`, `message_id`)** (lo stesso evento può essere consumato da più consumatori dello stesso servizio);
   - tabella di storia `activities."__EFMigrationsHistory"`;
   - operazione `EnsureSchema("activities")` generata da `HasDefaultSchema` (no-op su schema esistente; operazione **pianificata**);
   - nomi di PK come generati da EF con `UseSnakeCaseNamingConvention`.
