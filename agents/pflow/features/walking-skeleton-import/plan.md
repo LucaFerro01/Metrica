@@ -24,7 +24,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 - `commit_policy: manual`: ogni task termina con una proposta di commit; il commit lo fa l'utente. Commit conventional senza `#ref` (DEC-011).
 - Comandi di verifica scritti per **Windows PowerShell** (su PowerShell `curl` è un alias: usare `curl.exe` o `Invoke-RestMethod`).
 - Azioni umane previste: avviare Docker; ricreare il volume del database dopo la modifica dello script di inizializzazione (`docker compose -f deploy/compose.yaml down -v`, T04); attivare `pnpm` prima di T16 (`corepack enable`, poi `corepack prepare pnpm@latest --activate`); approvare le due migrazioni (T09, T11).
-- Dipendenze ammesse (versioni verificate su NuGet/npm il 2026-11-12, tutte in `Directory.Packages.props`): `NATS.Net` 3.3.x, `Garmin.FIT.Sdk` 21.221.0, `Npgsql` 10.0.x, `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3, `Microsoft.EntityFrameworkCore.*` 10.0.x (con `.Design` in `PrivateAssets=all`), `EFCore.NamingConventions` 10.0.1, `Yarp.ReverseProxy` 2.3.0, `Microsoft.AspNetCore.OpenApi` 10.0.x, OpenTelemetry 1.x, `xunit` 2.9.3 con `xunit.runner.visualstudio` e `Microsoft.NET.Test.Sdk` 18.12.0, `Testcontainers.PostgreSql` e `Testcontainers.Nats` 4.16.0, `Microsoft.AspNetCore.Mvc.Testing` 10.0.x. Frontend: versioni correnti di React 19, Vite, TanStack Router/Query, `openapi-typescript` 7, `openapi-fetch`, Vitest, Testing Library, Tailwind CSS, Playwright; `packageManager` di pnpm fissato in `package.json`.
+- Dipendenze ammesse (versioni verificate su NuGet/npm il 2026-11-12, tutte in `Directory.Packages.props`): `NATS.Net` 3.3.x, `Garmin.FIT.Sdk` 21.221.0, `Npgsql` 10.0.x, `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.3, `Microsoft.EntityFrameworkCore.*` 10.0.x (con `.Design` in `PrivateAssets=all`), `EFCore.NamingConventions` 10.0.1, `Yarp.ReverseProxy` 2.3.0, `Microsoft.AspNetCore.OpenApi` 10.0.x, OpenTelemetry 1.x, `xunit` 2.9.3 con `xunit.extensibility.core` 2.9.3 (per `IAsyncLifetime` nelle librerie di test), `xunit.runner.visualstudio` 3.1.5 e `Microsoft.NET.Test.Sdk` 18.12.0, `Testcontainers.PostgreSql` 4.16.0 (la fixture NATS usa `ContainerBuilder` generico: `Testcontainers.Nats` resta disponibile ma non è usato), `Microsoft.AspNetCore.Mvc.Testing` 10.0.x. Frontend: versioni correnti di React 19, Vite, TanStack Router/Query, `openapi-typescript` 7, `openapi-fetch`, Vitest, Testing Library, Tailwind CSS, Playwright; `packageManager` di pnpm fissato in `package.json`.
 
 ## Requirements coverage
 
@@ -224,7 +224,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T04: Infrastruttura di test e correzione di deploy (NATS e permessi del database)
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-023, REQ-036 (server 8 MB), AC-008; DEC-005, DEC-012, DEC-013, DEC-014
 **Depends on:** T01
 **Tier:** strong — permessi del database e contratto operativo di NATS.

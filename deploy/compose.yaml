@@ -32,13 +32,15 @@ services:
 
   nats:
     image: docker.io/library/nats:2
-    # -js abilita JetStream; -sd è la cartella di persistenza; -m apre il monitoraggio HTTP
-    command: ["-js", "-sd", "/data", "-m", "8222"]
+    # La configurazione (JetStream, monitoraggio HTTP, max_payload a 8 MB) è in nats/nats-server.conf.
+    command: ["-c", "/etc/nats/nats-server.conf"]
     ports:
       - "${NATS_PORT:-4222}:4222"
       - "${NATS_MONITOR_PORT:-8222}:8222"
     volumes:
       - nats-data:/data
+      # Con Podman su Linux/SELinux può servire il suffisso ":Z" sul bind mount.
+      - ./nats/nats-server.conf:/etc/nats/nats-server.conf:ro
     restart: unless-stopped
 
 volumes:

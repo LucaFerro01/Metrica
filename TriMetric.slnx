@@ -6,5 +6,7 @@
   <Folder Name="/tests/">
     <Project Path="src/shared/contracts/tests/TriMetric.Contracts.Tests/TriMetric.Contracts.Tests.csproj" />
     <Project Path="src/shared/ServiceDefaults/tests/TriMetric.ServiceDefaults.Tests/TriMetric.ServiceDefaults.Tests.csproj" />
+    <Project Path="tests/TriMetric.TestInfrastructure/TriMetric.TestInfrastructure.csproj" />
+    <Project Path="tests/TriMetric.TestInfrastructure.Tests/TriMetric.TestInfrastructure.Tests.csproj" />
   </Folder>
 </Solution>

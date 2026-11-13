@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Codice di test condiviso (DEC-013): fixture Testcontainers per TimescaleDB e NATS. Non e codice di produzione. -->
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.extensibility.core" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="NATS.Net" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+  </ItemGroup>
+
+</Project>
