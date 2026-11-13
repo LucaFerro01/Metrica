@@ -78,8 +78,15 @@ public sealed class ConsumerTests(NatsFixture nats, TimescaleFixture db)
         await Eventually.AssertAsync(s.IsDrainedAsync, Timeout, "nessun messaggio resta in attesa (Term)");
     }
 
-    [Fact]
-    public async Task RestartInTheMiddle_LosesNothing_AndDoesNotDuplicateDomainEffects()
+    /// <summary>
+    /// Con <c>AckWait</c> breve la ripresa entro 20 s vale anche se il <c>Nak</c> all'arresto non servisse (un arresto non pulito
+    /// riprende al piu' dopo <c>AckWait</c>); con <c>AckWait</c> di 60 s la ripresa entro 20 s dimostra che il <c>Nak</c> rilascia
+    /// subito il messaggio. In entrambi i casi nessun messaggio e' perso e nessun effetto di dominio e' duplicato.
+    /// </summary>
+    [Theory]
+    [InlineData(5)]
+    [InlineData(60)]
+    public async Task RestartInTheMiddle_LosesNothing_AndDoesNotDuplicateDomainEffects(int ackWaitSeconds)
     {
         await using var s = await NewScenarioAsync();
         using var started = new SemaphoreSlim(0);
@@ -93,11 +100,11 @@ public sealed class ConsumerTests(NatsFixture nats, TimescaleFixture db)
                 await Task.Delay(Timeout, ctx.Ct);
             }
         };
-        // AckWait lungo: la ripresa rapida dimostra che l'arresto rilascia il messaggio (Nak), non l'attesa di AckWait.
-        var options = s.Options with { AckWait = TimeSpan.FromSeconds(60) };
+        var options = s.Options with { AckWait = TimeSpan.FromSeconds(ackWaitSeconds) };
 
         List<EventEnvelope<TestPayload>> envelopes;
-        await using (var first = await s.StartHostAsync(options))
+        var logs = new CapturingLoggerProvider();
+        await using (var first = await s.StartHostAsync(options, logs))
         {
             envelopes = [.. await s.PublishManyAsync(5)];
             Assert.True(await started.WaitAsync(Timeout), "il primo messaggio non e' arrivato al gestore");
@@ -106,11 +113,19 @@ public sealed class ConsumerTests(NatsFixture nats, TimescaleFixture db)
 
         Assert.Equal(0, await s.IdleInTransactionCountAsync());
 
-        await using var second = await s.StartHostAsync(options);
-        await Eventually.AssertAsync(
-            async () => await s.InboxCountAsync() == 5 && await s.IsDrainedAsync(),
-            TimeSpan.FromSeconds(20),
-            "tutti i messaggi elaborati dopo il riavvio");
+        await using var second = await s.StartHostAsync(options, logs);
+        try
+        {
+            await Eventually.AssertAsync(
+                async () => await s.InboxCountAsync() == 5 && await s.IsDrainedAsync(),
+                TimeSpan.FromSeconds(20),
+                "tutti i messaggi elaborati dopo il riavvio");
+        }
+        catch (Exception ex)
+        {
+            var entries = string.Join(" | ", logs.ComponentEntries.Select(e => $"{e.Level}: {e.Message}"));
+            throw new InvalidOperationException($"{ex.Message}. {await s.DescribeAsync(second)}. Log: {entries}", ex);
+        }
 
         foreach (var envelope in envelopes)
         {

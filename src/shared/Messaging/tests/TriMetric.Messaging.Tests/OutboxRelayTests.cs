@@ -58,6 +58,7 @@ public sealed class OutboxRelayTests(NatsFixture nats, TimescaleFixture timescal
         var stored = Assert.Single(await RelayProbe.StreamMessagesAsync(relay.JetStream, subject));
         Assert.Equal(envelope.Id.ToString(), stored.MsgId);
         Assert.Equal(row.Payload, stored.Data);
+        await Eventually.AssertAsync(() => relay.Stats.Published >= 1, Generous, "contatore dei pubblicati (aggiornato dopo il commit)");
         Assert.Equal(1, relay.Stats.Published);
         Assert.Equal(0, relay.Stats.Duplicates);
         Assert.Equal(0, relay.Stats.Failures);
@@ -206,6 +207,7 @@ public sealed class OutboxRelayTests(NatsFixture nats, TimescaleFixture timescal
 
         await Eventually.AssertAsync(async () => (await _probe.RowAsync(id)).PublishedAt is not null, Generous, "PublishedAt");
 
+        await Eventually.AssertAsync(() => relay.Stats.Published >= 1, Generous, "contatore dei pubblicati (aggiornato dopo il commit)");
         Assert.Equal(1, relay.Stats.Duplicates);
         Assert.Equal(1, relay.Stats.Published);
         Assert.Equal(0, relay.Stats.Failures);
@@ -353,6 +355,7 @@ public sealed class OutboxRelayTests(NatsFixture nats, TimescaleFixture timescal
 
         var stored = await RelayProbe.StreamMessagesAsync(relay.JetStream, subject);
         Assert.Equal(ids.Select(i => i.ToString()), stored.OrderBy(m => m.Sequence).Select(m => m.MsgId));
+        await Eventually.AssertAsync(() => relay.Stats.Published >= 30, Generous, "contatore dei pubblicati (aggiornato dopo il commit)");
         Assert.Equal(30, relay.Stats.Published);
         Assert.Equal(0, relay.Stats.Duplicates);
     }
@@ -396,8 +399,13 @@ public sealed class OutboxRelayTests(NatsFixture nats, TimescaleFixture timescal
         await using var second = await StartHostAsync();
         await Eventually.AssertAsync(async () => (await _probe.RowAsync(envelope.Id)).PublishedAt is not null, Generous, "ripreso dal secondo relay");
 
+        await Eventually.AssertAsync(() => second.Stats.Published >= 1, Generous, "contatore dei pubblicati (aggiornato dopo il commit)");
         Assert.Equal(1, second.Stats.Published);
         Assert.Single(await RelayProbe.StreamMessagesAsync(second.JetStream, subject));
+
+        // Il secondo relay sta ancora leggendo l'outbox ogni 50 ms: ogni lettura tiene una transazione aperta e inattiva per
+        // qualche millisecondo (di piu' sotto carico). Si ferma prima di contare, altrimenti la misura e' una lotteria.
+        await second.StopAsync();
         Assert.Equal(0, await _probe.IdleInTransactionCountAsync());
     }
 

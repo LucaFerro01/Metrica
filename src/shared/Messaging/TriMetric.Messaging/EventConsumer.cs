@@ -62,6 +62,9 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
     private readonly ILogger<EventConsumer<TDbContext, TData, THandler>> _logger;
     private string? _insertSql;
 
+    /// <summary>Completato quando l'enumerazione dei messaggi e' terminata e la sottoscrizione e' stata chiusa (vedi <see cref="NakOnShutdownAsync"/>).</summary>
+    private volatile TaskCompletionSource _consumptionClosed = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
     internal EventConsumer(
         IServiceScopeFactory scopeFactory,
         INatsJSContext jetStream,
@@ -109,6 +112,13 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
                     (int)_options.AckWait.TotalMilliseconds);
 
                 await ConsumeAsync(consumer, stoppingToken);
+
+                // All'arresto l'enumerazione termina senza eccezioni: non e' un'anomalia.
+                if (stoppingToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 _logger.LogWarning(
                     "Il consumo del consumatore {Consumer} si e' interrotto senza errori: riavvio.",
                     _options.DurableName);
@@ -179,6 +189,9 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
     private async Task ConsumeAsync(INatsJSConsumer consumer, CancellationToken stoppingToken)
     {
         using var slots = new SemaphoreSlim(_options.MaxConcurrency);
+        var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _consumptionClosed = closed;
+        INatsJSMsg<byte[]>? unprocessed = null;
         var running = new ConcurrentDictionary<int, Task>();
         var nextId = 0;
         try
@@ -201,9 +214,10 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
                 }
                 catch (OperationCanceledException)
                 {
-                    // Arresto mentre il messaggio attende uno slot (caso raro): lo si rilascia subito invece di attendere AckWait.
-                    await SettleAsync(token => message.NakAsync(cancellationToken: token), "Nak", message.Metadata?.Sequence.Stream ?? 0);
-                    throw;
+                    // Arresto mentre il messaggio attende uno slot (caso raro): si esce dal ciclo (chiudendo la sottoscrizione)
+                    // e solo dopo lo si rilascia, invece di attendere AckWait.
+                    unprocessed = message;
+                    break;
                 }
 
                 var id = Interlocked.Increment(ref nextId);
@@ -223,9 +237,18 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
                     },
                     CancellationToken.None);
             }
+
+            // Qui l'enumeratore e' stato eliminato: la sottoscrizione e' chiusa e il server non ha piu' dove consegnare.
+            closed.TrySetResult();
+            if (unprocessed is { } waiting)
+            {
+                await NakOnShutdownAsync(waiting, waiting.Metadata?.Sequence.Stream ?? 0);
+            }
         }
         finally
         {
+            closed.TrySetResult();
+
             // Arresto o errore del consumo: i messaggi in elaborazione terminano (all'arresto vedono la cancellazione).
             await Task.WhenAll(running.Values);
         }
@@ -295,7 +318,7 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
             // Un Nak senza attesa lo rende subito riconsegnabile (altrimenti un riavvio attenderebbe AckWait e,
             // con MaxAckPending pieno, nessun altro messaggio arriverebbe nel frattempo).
             await progress.StopAsync();
-            await SettleAsync(token => message.NakAsync(cancellationToken: token), "Nak", sequence);
+            await NakOnShutdownAsync(message, sequence);
             return;
         }
         catch (EventValidationException)
@@ -356,7 +379,7 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
             (int)delay.TotalMilliseconds);
 
         await progress.StopAsync();
-        await SettleAsync(token => message.NakAsync(new AckOpts { NakDelay = delay }, token), "Nak", sequence);
+        await NakAsync(message, new AckOpts { NakDelay = delay }, sequence);
         _counters.AddRetried();
     }
 
@@ -404,7 +427,7 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             await progress.StopAsync();
-            await SettleAsync(token => message.NakAsync(cancellationToken: token), "Nak", sequence);
+            await NakOnShutdownAsync(message, sequence);
             return;
         }
         catch (Exception ex)
@@ -417,7 +440,7 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
                 OutboxRelayErrors.Describe(ex),
                 (int)delay.TotalMilliseconds);
             await progress.StopAsync();
-            await SettleAsync(token => message.NakAsync(new AckOpts { NakDelay = delay }, token), "Nak", sequence);
+            await NakAsync(message, new AckOpts { NakDelay = delay }, sequence);
             return;
         }
 
@@ -500,6 +523,46 @@ public sealed class EventConsumer<TDbContext, TData, THandler> : BackgroundServi
     {
         var index = (int)Math.Min(deliveries == 0 ? 0 : deliveries - 1, (ulong)(_options.Backoff.Length - 1));
         return _options.Backoff[index];
+    }
+
+    /// <summary>
+    /// <c>Nak</c> senza attesa di un messaggio non elaborato per l'arresto. Parte <b>solo dopo</b> la chiusura della sottoscrizione ai
+    /// messaggi: il <c>Nak</c> rende il messaggio subito riconsegnabile e, se la richiesta di pull dell'istanza che si ferma fosse
+    /// ancora registrata sul server, la riconsegna andrebbe a una sottoscrizione ormai chiusa. Il messaggio resterebbe allora non
+    /// confermato fino ad <c>AckWait</c>, bloccando con <c>MaxAckPending</c> pieno anche il consumatore riavviato.
+    /// L'attesa e' limitata: se la chiusura non avviene entro <see cref="SettleTimeout"/> il <c>Nak</c> parte comunque.
+    /// </summary>
+    private async Task NakOnShutdownAsync(INatsJSMsg<byte[]> message, ulong sequence)
+    {
+        try
+        {
+            await _consumptionClosed.Task.WaitAsync(SettleTimeout);
+        }
+        catch (TimeoutException)
+        {
+            // Si prosegue comunque.
+        }
+
+        await NakAsync(message, opts: null, sequence);
+    }
+
+    /// <summary>
+    /// <c>Nak</c> seguito da un <c>PING</c>: la pubblicazione del <c>Nak</c> termina quando il comando e' accodato nella connessione,
+    /// non quando e' arrivato al server, e la chiusura della connessione (arresto dell'host) scarta i comandi non ancora scritti.
+    /// Il <c>PING</c> torna solo dopo che il server ha ricevuto tutto cio' che lo precede. Senza questo passaggio un <c>Nak</c>
+    /// di arresto andava perso sotto carico e il messaggio restava non confermato fino ad <c>AckWait</c> (bloccando con
+    /// <c>MaxAckPending</c> pieno anche il consumatore riavviato).
+    /// </summary>
+    private async Task NakAsync(INatsJSMsg<byte[]> message, AckOpts? opts, ulong sequence)
+    {
+        await SettleAsync(
+            async token =>
+            {
+                await message.NakAsync(opts, token);
+                await _jetStream.Connection.PingAsync(token);
+            },
+            "Nak",
+            sequence);
     }
 
     /// <summary>Un ack, nak o term con timeout proprio. Un fallimento si registra (solo il tipo) e non lancia: la riconsegna rimedia.</summary>

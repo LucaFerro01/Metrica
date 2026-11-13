@@ -314,6 +314,16 @@ internal sealed class ConsumerScenario : IAsyncDisposable
         return info is { NumPending: 0, NumAckPending: 0 };
     }
 
+    /// <summary>Stato osservabile (consumatore JetStream, inbox, contatori) per i messaggi d'errore dei test.</summary>
+    public async Task<string> DescribeAsync(ConsumerHost? app = null)
+    {
+        var info = await ConsumerInfoAsync();
+        var counters = app?.Stats.For(Durable);
+        return $"consumatore: pending={info?.NumPending} ackPending={info?.NumAckPending} redelivered={info?.NumRedelivered} waiting={info?.NumWaiting}; "
+            + $"inbox={await InboxCountAsync()}; "
+            + (counters is null ? string.Empty : $"contatori: received={counters.Received} redelivered={counters.Redelivered} processed={counters.Processed} retried={counters.Retried}");
+    }
+
     /// <summary>Crea (e ricorda per la pulizia) un consumatore con configurazione propria sullo stream EVENTS.</summary>
     public async Task<INatsJSConsumer> CreateRawConsumerAsync(ConsumerConfig config)
     {
