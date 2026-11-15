@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using TriMetric.Activities;
 using TriMetric.Contracts;
@@ -38,7 +40,23 @@ builder.Services.AddEventConsumer<ActivitiesDbContext, ActivityImported, Activit
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseHealthCheck>("database", tags: [ServiceDefaultsExtensions.ReadyTag]);
 
-builder.Services.AddOpenApi();
+// API di lettura (T13): opzioni validate all'avvio (chiave sconosciuta, valore non numerico o fuori intervallo = avvio fallito).
+// Si leggono alla prima risoluzione: un override aggiunto dopo la registrazione (WebApplicationFactory) e' rispettato.
+builder.Services.AddOptions<ActivitiesApiOptions>()
+    .BindConfiguration(ActivitiesApiOptions.SectionName, binder => binder.ErrorOnUnknownConfiguration = true)
+    .Validate(o => o.IsValid(), ActivitiesApiOptions.ValidationMessage)
+    .ValidateOnStart();
+builder.Services.AddScoped<ActivityStreamReader>();
+
+// JSON delle API (e quindi dello schema OpenAPI) come i contratti: Sport e' "run" e non "Run" o 0 (DEC-005); numeri solo come
+// numeri (le opzioni web predefinite accettano anche stringhe e lo schema diventerebbe "number | string" nel client generato).
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: false));
+});
+
+builder.Services.AddOpenApi(options => options.AddActivityApiDocument());
 
 var app = builder.Build();
 
@@ -52,6 +70,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapServiceDefaults();
+app.MapActivityEndpoints();   // in tutti gli ambienti; fuori da Development lo schema Deny risponde 401
 
 app.Run();
 

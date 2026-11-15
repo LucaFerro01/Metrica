@@ -519,7 +519,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T13: `activities` — API di elenco e dettaglio
 
-**Status:** pending
+**Status:** completed (vedi `context.md`: `maxPoints` minimo 2 e massimo configurabile tra 1000 e 100.000; riduzione nel database; schema `ActivityListPage` in più; 400 per parametri non validi)
 **Covers:** REQ-018, REQ-019, REQ-021, REQ-022; AC-007, AC-009, AC-010, AC-011; DEC-006, DEC-007
 **Depends on:** T11
 **Tier:** strong — isolamento per utente (REQ-022) e contratto API pubblico usato dal client generato.
