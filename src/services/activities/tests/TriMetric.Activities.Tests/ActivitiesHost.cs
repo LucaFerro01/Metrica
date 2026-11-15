@@ -1,8 +1,10 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using TriMetric.TestInfrastructure;
@@ -13,12 +15,24 @@ namespace TriMetric.Activities.Tests;
 /// L'host reale di <c>TriMetric.Activities</c> (<c>Program</c>) in processo, con stringa di connessione e URL di NATS dei
 /// contenitori di prova. La configurazione si sovrascrive con valori in memoria letti alla prima risoluzione dei servizi.
 /// </summary>
+/// <remarks>
+/// <para><b>Trappola della configurazione.</b> <c>extra</c> passa da <c>ConfigureAppConfiguration</c>, applicato DOPO la
+/// costruzione dell'host: vale solo per i valori letti alla prima risoluzione dei servizi (<c>ConnectionStrings:Activities</c>,
+/// <c>Nats:Url</c>). Una chiave letta da <c>Program</c> mentre registra i servizi (<c>Dev:UserId</c>, le opzioni del
+/// consumatore <c>Consumers:ActivityImported:*</c>) con <c>extra</c> e' IGNORATA IN SILENZIO: va in <c>startupSettings</c>
+/// (<c>UseSetting</c>, visibile gia' alla costruzione).</para>
+/// <para>Ogni host avviato ha il consumatore durevole <c>activities-activity-imported</c> sul NATS condiviso: l'isolamento
+/// tra test e' descritto in <see cref="ImportScenario"/>.</para>
+/// </remarks>
 internal sealed class ActivitiesHost(
     string environment,
     string? connectionString,
     string natsUrl,
     IReadOnlyDictionary<string, string?>? extra = null,
-    Guid? userId = null) : WebApplicationFactory<Program>
+    Guid? userId = null,
+    IReadOnlyDictionary<string, string?>? startupSettings = null,
+    Action<IServiceCollection>? configureServices = null,
+    ILoggerProvider? logs = null) : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -29,6 +43,19 @@ internal sealed class ActivitiesHost(
             // ConfigureAppConfiguration qui sotto e' applicato dopo: per questa chiave e' IGNORATO IN SILENZIO e resta
             // l'UUID di appsettings.Development.json. UseSetting invece e' visibile gia' alla costruzione e funziona.
             builder.UseSetting("Dev:UserId", id.ToString());
+        }
+
+        foreach (var (key, value) in startupSettings ?? new Dictionary<string, string?>())
+        {
+            if (value is not null)
+            {
+                builder.UseSetting(key, value);
+            }
+        }
+
+        if (configureServices is not null)
+        {
+            builder.ConfigureTestServices(configureServices);
         }
 
         builder.ConfigureAppConfiguration((_, configuration) =>
@@ -46,12 +73,26 @@ internal sealed class ActivitiesHost(
 
             configuration.AddInMemoryCollection(settings);
         });
-        builder.ConfigureLogging(logging => logging.ClearProviders());
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+            if (logs is not null)
+            {
+                logging.AddProvider(logs);
+            }
+        });
     }
 
     /// <summary>Host in <c>Development</c> sul database condiviso come ruolo <c>activities_svc</c> (le migrazioni si applicano all'avvio).</summary>
-    public static ActivitiesHost Development(TimescaleFixture db, NatsFixture nats, IReadOnlyDictionary<string, string?>? extra = null, Guid? userId = null) =>
-        new("Development", db.ConnectionStringFor("activities"), nats.Url, extra, userId);
+    public static ActivitiesHost Development(
+        TimescaleFixture db,
+        NatsFixture nats,
+        IReadOnlyDictionary<string, string?>? extra = null,
+        Guid? userId = null,
+        IReadOnlyDictionary<string, string?>? startupSettings = null,
+        Action<IServiceCollection>? configureServices = null,
+        ILoggerProvider? logs = null) =>
+        new("Development", db.ConnectionStringFor("activities"), nats.Url, extra, userId, startupSettings, configureServices, logs);
 
     /// <summary>Avvia l'host (i servizi si risolvono alla prima richiesta o a <c>Services</c>) e restituisce un client.</summary>
     public HttpClient Start()
@@ -161,6 +202,9 @@ internal static class MigratedDatabase
 /// <summary>Attese con polling e timeout (mai attese fisse lunghe).</summary>
 internal static class Eventually
 {
+    public static Task AssertAsync(Func<bool> condition, TimeSpan timeout, string description) =>
+        AssertAsync(() => Task.FromResult(condition()), timeout, description);
+
     public static async Task AssertAsync(Func<Task<bool>> condition, TimeSpan timeout, string description)
     {
         var deadline = DateTime.UtcNow + timeout;

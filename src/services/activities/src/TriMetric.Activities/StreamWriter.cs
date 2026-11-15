@@ -21,7 +21,8 @@ namespace TriMetric.Activities;
 /// <para><b>Validazione.</b> Prima di avviare il COPY, in una passata senza allocazioni, verifica che tutte le colonne
 /// presenti siano lunghe quanto <see cref="StreamColumns.TimeOffsetSeconds"/> e che gli scarti siano finiti e nell'intervallo
 /// rappresentabile: <see cref="ArgumentException"/> con SOLO nomi e conteggi (nessun valore: REQ-034) e nessuna riga scritta,
-/// transazione intatta. Il writer non scrive mai righe sbilanciate. La validazione dell'evento verso la DLQ e' di T12.
+/// transazione intatta. Il writer non scrive mai righe sbilanciate. La stessa verifica e' esposta da <see cref="Validate"/>: il gestore di
+/// <c>ActivityImported</c> (T12) la usa per mandare un evento non valido in DLQ prima di scrivere.
 /// Un errore DURANTE il COPY (rete, annullamento) lascia invece la transazione da annullare, come per qualunque errore
 /// del server: il chiamante fa il rollback.</para>
 /// <para><b>Tempo.</b> <c>time = startTime + offset</c>, in UTC. Lo scarto e' convertito in microsecondi interi
@@ -80,32 +81,10 @@ public sealed class StreamWriter(ActivitiesDbContext context)
     /// <exception cref="InvalidOperationException">Nessuna transazione attiva sul contesto, o connessione non aperta.</exception>
     public async Task<long> WriteAsync(Guid activityId, DateTimeOffset startTime, StreamColumns stream, CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(stream);
-        if (stream.TimeOffsetSeconds is null)
-        {
-            throw new ArgumentException("TimeOffsetSeconds e' obbligatorio.", nameof(stream));
-        }
-
+        var columns = ValidateAndSelect(startTime, stream);
         var offsets = stream.TimeOffsetSeconds;
         var count = offsets.Count;
-        var columns = new IReadOnlyList<double?>?[ValueColumns.Length];
-        for (var c = 0; c < columns.Length; c++)
-        {
-            columns[c] = ValueColumns[c].Select(stream);
-            if (columns[c] is { } column && column.Count != count)
-            {
-                throw new ArgumentException(
-                    $"La colonna {ValueColumns[c].Property} ha {column.Count} valori ma TimeOffsetSeconds ne ha {count}: "
-                    + "le colonne dello stream devono avere tutte la stessa lunghezza.",
-                    nameof(stream));
-            }
-        }
-
         var startTicks = startTime.UtcTicks;
-        for (var i = 0; i < count; i++)
-        {
-            _ = TimeTicks(startTicks, offsets[i], i);   // lancia ArgumentException prima di toccare il database
-        }
 
         if (context.Database.CurrentTransaction is null)
         {
@@ -158,6 +137,47 @@ public sealed class StreamWriter(ActivitiesDbContext context)
         }
 
         return (long)await importer.CompleteAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Verifica, senza toccare il database, tutto cio' che <see cref="WriteAsync"/> rifiuterebbe: colonne di lunghezza diversa da
+    /// <see cref="StreamColumns.TimeOffsetSeconds"/>, scarti non finiti o fuori intervallo, istanti non rappresentabili. Il gestore
+    /// di <c>ActivityImported</c> la chiama PRIMA di scrivere (T12) per mandare l'evento in DLQ senza ritentativi, invece di
+    /// scoprire l'errore a meta' elaborazione. I messaggi riportano solo nomi e conteggi (REQ-034).
+    /// </summary>
+    /// <exception cref="ArgumentException">Stream non valido (come <see cref="WriteAsync"/>).</exception>
+    public static void Validate(DateTimeOffset startTime, StreamColumns stream) => _ = ValidateAndSelect(startTime, stream);
+
+    private static IReadOnlyList<double?>?[] ValidateAndSelect(DateTimeOffset startTime, StreamColumns stream)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        if (stream.TimeOffsetSeconds is null)
+        {
+            throw new ArgumentException("TimeOffsetSeconds e' obbligatorio.", nameof(stream));
+        }
+
+        var offsets = stream.TimeOffsetSeconds;
+        var count = offsets.Count;
+        var columns = new IReadOnlyList<double?>?[ValueColumns.Length];
+        for (var c = 0; c < columns.Length; c++)
+        {
+            columns[c] = ValueColumns[c].Select(stream);
+            if (columns[c] is { } column && column.Count != count)
+            {
+                throw new ArgumentException(
+                    $"La colonna {ValueColumns[c].Property} ha {column.Count} valori ma TimeOffsetSeconds ne ha {count}: "
+                    + "le colonne dello stream devono avere tutte la stessa lunghezza.",
+                    nameof(stream));
+            }
+        }
+
+        var startTicks = startTime.UtcTicks;
+        for (var i = 0; i < count; i++)
+        {
+            _ = TimeTicks(startTicks, offsets[i], i);   // lancia ArgumentException prima di toccare il database
+        }
+
+        return columns;
     }
 
     /// <summary>Tick UTC del punto: inizio piu' scarto arrotondato al microsecondo, in aritmetica intera.</summary>

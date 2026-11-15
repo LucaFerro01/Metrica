@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TriMetric.Activities;
+using TriMetric.Contracts;
 using TriMetric.Messaging;
 using TriMetric.ServiceDefaults;
 using StreamWriter = TriMetric.Activities.StreamWriter;   // senza alias: ambiguo con System.IO.StreamWriter (using impliciti)
@@ -28,6 +29,10 @@ builder.Services.AddDbContext<ActivitiesDbContext>((services, options) =>
 // Scrive i punti dello stream con COPY binario nella connessione e nella transazione correnti del contesto: nello scope
 // di un messaggio (T12) inbox, gestore e punti si confermano o si annullano insieme.
 builder.Services.AddScoped<StreamWriter>();
+
+// Consumatore durevole di ActivityImported (T12): opzioni lette ORA da builder.Configuration (vedi ActivityImportedConsumer).
+builder.Services.AddEventConsumer<ActivitiesDbContext, ActivityImported, ActivityImportedHandler>(
+    ActivityImportedConsumer.CreateOptions(builder.Configuration));
 
 // /health/ready: solo il database. NATS non e' un controllo di prontezza (REQ-013).
 builder.Services.AddHealthChecks()

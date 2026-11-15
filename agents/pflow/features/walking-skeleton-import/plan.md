@@ -491,7 +491,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T12: `activities` — consumo di `ActivityImported`
 
-**Status:** pending
+**Status:** completed (vedi `context.md`: validazione estesa con versione e tipo della busta; `sport` mancante non rilevabile, limite noto)
 **Covers:** REQ-014, REQ-015, REQ-016; AC-006, AC-014; DEC-001, DEC-005
 **Depends on:** T07, T11
 **Tier:** strong — idempotenza e consistenza dell'inserimento.
