@@ -548,7 +548,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T14: `gateway` con YARP
 
-**Status:** pending
+**Status:** completed (vedi `context.md`: una rotta per servizio con `PathRemovePrefix`, barra finale conservata, intestazioni e `userId` rimossi, `Gateway:MaxRequestBodyBytes`, 413 non leggibile dai client per corpi grandi)
 **Covers:** REQ-020; AC-001; DEC-009
 **Depends on:** T03
 **Tier:** strong — rimozione di intestazioni di identità e riscrittura dei percorsi (confine di sicurezza).

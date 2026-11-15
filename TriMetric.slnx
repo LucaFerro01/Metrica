@@ -5,6 +5,7 @@
     <Project Path="src/shared/Messaging/TriMetric.Messaging/TriMetric.Messaging.csproj" />
     <Project Path="src/services/ingestion/src/TriMetric.Ingestion/TriMetric.Ingestion.csproj" />
     <Project Path="src/services/activities/src/TriMetric.Activities/TriMetric.Activities.csproj" />
+    <Project Path="src/services/gateway/src/TriMetric.Gateway/TriMetric.Gateway.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="src/shared/contracts/tests/TriMetric.Contracts.Tests/TriMetric.Contracts.Tests.csproj" />
@@ -12,6 +13,7 @@
     <Project Path="src/shared/Messaging/tests/TriMetric.Messaging.Tests/TriMetric.Messaging.Tests.csproj" />
     <Project Path="src/services/ingestion/tests/TriMetric.Ingestion.Tests/TriMetric.Ingestion.Tests.csproj" />
     <Project Path="src/services/activities/tests/TriMetric.Activities.Tests/TriMetric.Activities.Tests.csproj" />
+    <Project Path="src/services/gateway/tests/TriMetric.Gateway.Tests/TriMetric.Gateway.Tests.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure/TriMetric.TestInfrastructure.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure.Tests/TriMetric.TestInfrastructure.Tests.csproj" />
   </Folder>
