@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Servizio activities: host web, persistenza (schema "activities") e scrittura degli stream nella hypertable con COPY binario.
+       Il consumo di ActivityImported (T12) e le API di lettura (T13) arrivano nei task successivi. Nessun log di contenuto
+       delle attivita' (coordinate, frequenza cardiaca): REQ-034. -->
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Solo strumenti di progettazione (dotnet ef): non deve propagarsi ai progetti che referenziano il servizio. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\shared\contracts\TriMetric.Contracts\TriMetric.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\ServiceDefaults\TriMetric.ServiceDefaults\TriMetric.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\Messaging\TriMetric.Messaging\TriMetric.Messaging.csproj" />
+  </ItemGroup>
+
+</Project>

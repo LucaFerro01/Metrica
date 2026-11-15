@@ -448,7 +448,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T11: `activities` — host, persistenza e migrazione con hypertable
 
-**Status:** pending
+**Status:** completed (vedi `context.md`: `create_hypertable` crea da solo l'indice `activity_stream_time_idx`, non elencato in "Schema changes"; accettato)
 **Covers:** REQ-016, REQ-021, REQ-023, REQ-024; AC-008; DEC-003, DEC-006, DEC-009, DEC-014
 **Depends on:** T03, T07
 **Tier:** strong — migrazione con hypertable, inserimento massivo e isolamento dei dati.
