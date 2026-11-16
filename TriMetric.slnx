@@ -16,5 +16,6 @@
     <Project Path="src/services/gateway/tests/TriMetric.Gateway.Tests/TriMetric.Gateway.Tests.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure/TriMetric.TestInfrastructure.csproj" />
     <Project Path="tests/TriMetric.TestInfrastructure.Tests/TriMetric.TestInfrastructure.Tests.csproj" />
+    <Project Path="tests/TriMetric.IntegrationTests/TriMetric.IntegrationTests.csproj" />
   </Folder>
 </Solution>

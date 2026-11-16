@@ -576,7 +576,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T15: Test di integrazione end-to-end
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-011, REQ-013, REQ-014, REQ-015, REQ-017, REQ-022, REQ-023, REQ-032, REQ-034, REQ-035, REQ-036; AC-001…AC-008, AC-012, AC-014
 **Depends on:** T10, T12, T13, T14
 **Tier:** strong — orchestrazione di contenitori reali e più servizi.
