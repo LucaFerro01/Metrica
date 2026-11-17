@@ -48,12 +48,24 @@ Regole:
 - Ogni feature espone un'interfaccia pubblica (`index.ts`); il resto è interno.
 - Il client API è **generato** dalle descrizioni OpenAPI dei servizi, così i tipi seguono il backend.
 
-## Mobile e PWA
+## Mobile, desktop e guscio nativo
 
-- Layout responsivo *mobile-first*; le stesse pagine servono desktop e telefono.
-- App installabile con manifest e service worker.
+Una sola applicazione React, con **due modalità di layout** sulle stesse pagine e sugli stessi percorsi ([ADR 0008](adr/0008-frontend-responsivo-con-guscio-nativo.md)):
+
+| | Telefono (sotto 768 px) | Desktop (da 768 px) |
+|---|---|---|
+| Chi lo usa | L'atleta | Chi pianifica (allenatore o atleta) e l'atleta per l'analisi |
+| Navigazione | Barra in basso | Barra laterale |
+| Elenco attività | Schede | Tabella |
+| Azioni frequenti | Allenamento di oggi, attività appena fatta, caricare un file | Calendario, libreria e editor degli allenamenti, analisi |
+| Piano di allenamento | Sola lettura | Modifica |
+
+- Bersagli di tocco di almeno 44 px sul telefono; margini sicuri dello schermo (`viewport-fit=cover` e `env(safe-area-inset-*)`).
+- **Predisposto per un guscio nativo** (Capacitor): base URL dell'API configurabile in build (`VITE_API_BASE_URL`), nessuna dipendenza da funzioni solo da browser (popup, download via link, accesso diretto a `localStorage` fuori da `shared/lib/storage`), selezione file con `<input type="file">`, instradamento servito dalla radice. Il guscio si aggiunge dopo lo scheletro del sistema (task T21), con l'account Apple Developer e una compilazione iOS su macchine macOS nel cloud per l'iPhone; l'Android si compila da Windows. Il gateway dovrà ammettere le origini del guscio (CORS).
+- **PWA installabile**: **[Ipotesi]** in seguito, con `vite-plugin-pwa`; non fa parte dello scheletro. Su iPhone le notifiche push web funzionano solo ad app aggiunta alla schermata Home da Safari.
 - Offline: **[Ipotesi]** lettura dei dati già visti (elenco e dettaglio recenti) e calendario; la scrittura offline non è un obiettivo iniziale.
-- Notifiche push: in seguito (es. promemoria allenamento).
+- Notifiche push: in seguito (es. promemoria allenamento), dal guscio nativo o dalla PWA.
+- Ruolo allenatore: il modello allenatore/atleta (chi pianifica per chi) non è deciso; cambia i confini di `identity` e `training-plan` (vedi [README](README.md#decisioni-aperte)).
 
 ## Prestazioni
 

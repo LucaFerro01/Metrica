@@ -2,7 +2,7 @@
 schema_version: 1
 status: ready
 tracking_ref: null
-updated_at: 2026-11-12
+updated_at: 2026-11-17
 ---
 
 # Implementation Plan: Scheletro del sistema e import di file GPX/FIT
@@ -13,7 +13,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 
 ## Global constraints
 
-- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-014): ogni task cita quelle che applica.
+- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-015): ogni task cita quelle che applica.
 - Target `net10.0`, SDK fissato da `global.json` (DEC-004). Un progetto per servizio.
 - Nessun codice condiviso di produzione oltre a `contracts`, `ServiceDefaults`, `Messaging`; nessuna dipendenza di questi da un servizio; un servizio non legge lo schema di un altro (REQ-023). `tests/TriMetric.TestInfrastructure` è codice di test condiviso (DEC-013).
 - Ogni endpoint dei servizi usa `RequireAuthorization()` e legge `userId` dal `ClaimsPrincipal`, mai dalla richiesta (DEC-006). Ogni servizio espone `public partial class Program` per i test con `WebApplicationFactory`.
@@ -53,7 +53,8 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 | REQ-025, REQ-029 | AC-013 | T16 | `pnpm -C src/web build`; `gen:api` senza differenze |
 | REQ-026 | AC-001, AC-004 | T17 | `pnpm -C src/web test` |
 | REQ-027, REQ-028 | AC-001, AC-010 | T18 | `pnpm -C src/web test` |
-| REQ-030 | AC-001 | T17, T18 | controllo automatico `scrollWidth <= innerWidth` a 375 px (Playwright) |
+| REQ-030, REQ-037 | AC-001 | T16, T17, T18 | controllo automatico `scrollWidth <= innerWidth` a 375 px e a 1280 px (Playwright); navigazione in basso sotto 768 px e barra laterale da 768 px |
+| REQ-038 | — | T16, T17 | test della base URL configurabile; regola di lint su `localStorage` e `window.open`; metadati di viewport |
 | REQ-032 | AC-001…AC-008, AC-012, AC-014 | T15 | `dotnet test tests/TriMetric.IntegrationTests` |
 | REQ-033 | AC-013 | T19 | revisione del documento e prova da zero in T20 |
 | REQ-034 | — | T03, T15 | test sui log con provider in memoria |
@@ -78,6 +79,7 @@ Recorded in `decisions.md`.
 - Create: `src/services/gateway/src/TriMetric.Gateway/**` e `.../tests/TriMetric.Gateway.Tests/**` (T14)
 - Create: `tests/TriMetric.IntegrationTests/**` (T15)
 - Create: `src/web/**` (T16–T18)
+- Create: `src/web/capacitor.config.ts`, `src/web/android/`, e le origini ammesse del gateway (T21, dopo lo scheletro)
 - Create: `scripts/dev.ps1`, `scripts/dev.sh`, `docs/getting-started.md`; Modify: `README.md` (T19)
 - Modify: `ARCHITECTURE/**`, `src/services/*/README.md` (T20)
 
@@ -606,7 +608,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T16: Scaffold del frontend React
 
 **Status:** pending
-**Covers:** REQ-025, REQ-029; AC-013; DEC-007, DEC-009
+**Covers:** REQ-025, REQ-029, REQ-030, REQ-037, REQ-038; AC-013; DEC-007, DEC-009, DEC-015
 **Depends on:** T10, T13
 **Tier:** standard — scaffold con struttura e comandi definiti.
 
@@ -617,7 +619,9 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 - Struttura: `src/app/` (router, provider), `src/features/activities/` (con sottocartelle per le pagine), `src/shared/api/` (client e tipi generati), `src/shared/lib/` (formattazione). Regola di lint che vieta importazioni tra `features`.
 - Client API: due basi, `/api/activities` per le attività e `/api/ingestion` per gli upload, con due istanze di `openapi-fetch` e tipi generati separati.
 - Script `gen:api`: genera `src/shared/api/ingestion.d.ts` e `activities.d.ts` da `http://127.0.0.1:5081/openapi/v1.json` e `http://127.0.0.1:5082/openapi/v1.json` (servizi avviati); i file generati sono committati.
-- Layout responsivo con navigazione (Attività, Carica); test del layout e delle funzioni di formattazione.
+- Layout a due modalità (DEC-015, REQ-037): sotto 768 px navigazione in basso, contenuto a colonna e bersagli di tocco di almeno 44 px; da 768 px barra laterale. Voci di navigazione: Attività, Carica. Test del layout (sia delle due modalità sia dello scorrimento orizzontale a 375 px e a 1280 px) e delle funzioni di formattazione.
+- Predisposizione al guscio nativo (DEC-015, REQ-038): `VITE_API_BASE_URL` (predefinito `/api`, documentato in `.env.example`) da cui derivano le due basi del client; `viewport-fit=cover` e margini `env(safe-area-inset-*)` nel layout; modulo `shared/lib/storage` come unico accesso a `localStorage`, con regola di lint che vieta `localStorage` e `window.open` altrove; nessun service worker né plugin PWA; instradamento servito dalla radice. Test: la base URL cambia con la variabile; il layout rispetta i margini sicuri.
+- Non avviare il dev server con `--host` per provare da un telefono sulla rete locale: i servizi usano l'identità di sviluppo fissa; solo con un sì esplicito dell'utente e su rete fidata (DEC-015).
 
 **Test cycle:**
 1. Scrivere i test di formattazione e layout.
@@ -638,14 +642,14 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T17: Web — pagina di upload
 
 **Status:** pending
-**Covers:** REQ-026, REQ-030; AC-001, AC-004
+**Covers:** REQ-026, REQ-030, REQ-037; AC-001, AC-004
 **Depends on:** T16
 **Tier:** standard — pagina con stato e gestione errori.
 
 **Action:**
-- `features/activities/upload`: selezione di un file `.gpx`/`.fit` (validazione client di estensione e dimensione), invio con avanzamento a `POST /api/ingestion/uploads`, esito (`accepted`/`duplicate`) ed errori `ProblemDetails` mostrati chiaramente; registra l'upload accettato (`externalId`) in uno stato condiviso con l'elenco per mostrarlo "in elaborazione".
+- `features/activities/upload`: selezione di un file `.gpx`/`.fit` (validazione client di estensione e di dimensione: **oltre 32 MiB si rifiuta PRIMA di inviare**, perché attraverso il gateway il 413 di un file grande non è leggibile dal client (rilievo I1 di T14); un errore di rete durante l'invio di un file grande si mostra come «file troppo grande o connessione interrotta»; sul telefono il selettore è il normale `<input type="file">` con `accept=".gpx,.fit"`), invio con avanzamento a `POST /api/ingestion/uploads`, esito (`accepted`/`duplicate`) ed errori `ProblemDetails` mostrati chiaramente; registra l'upload accettato (`externalId`) in uno stato condiviso con l'elenco per mostrarlo "in elaborazione".
 - Test (Vitest + Testing Library, server simulato): file valido → esito e stato "in elaborazione"; **avanzamento mostrato durante l'invio** (eventi di progresso simulati); `.txt` → errore client; 4xx del server → messaggio; `duplicate` → avviso.
-- Test Playwright con API simulata (`page.route`) a viewport 375 px: `document.documentElement.scrollWidth <= window.innerWidth` sulla pagina di upload.
+- Test Playwright con API simulata (`page.route`) a viewport 375 px e 1280 px: `document.documentElement.scrollWidth <= window.innerWidth` sulla pagina di upload.
 
 **Test cycle:**
 1. Scrivere i test.
@@ -666,14 +670,14 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T18: Web — elenco e dettaglio attività
 
 **Status:** pending
-**Covers:** REQ-027, REQ-028, REQ-030; AC-001, AC-010; DEC-008
+**Covers:** REQ-027, REQ-028, REQ-030, REQ-037; AC-001, AC-010; DEC-008, DEC-015
 **Depends on:** T16, T17
 **Tier:** standard — pagine di lettura con polling.
 
 **Action:**
-- Elenco: attività (data, sport, distanza, durata, dislivello), filtro per sport, paginazione; righe "in elaborazione" per gli upload accettati non ancora presenti (corrispondenza su `externalId`); polling ogni 2 s solo finché esiste almeno un caricamento in elaborazione, con timeout oltre il quale mostra "ancora in elaborazione, riprova".
+- Elenco: attività (data, sport, distanza, durata, dislivello) come schede sotto 768 px e come tabella da 768 px, filtro per sport, paginazione; righe "in elaborazione" per gli upload accettati non ancora presenti (corrispondenza su `externalId`); polling ogni 2 s solo finché esiste almeno un caricamento in elaborazione, con timeout oltre il quale mostra "ancora in elaborazione, riprova".
 - Dettaglio: riepilogo (data, sport, distanza, durata, durata in movimento, dislivello, FC, potenza, cadenza medie) e giri; "non disponibile" per i campi assenti; 404 gestito.
-- Test: elenco con filtro e paginazione; riga "in elaborazione" che diventa attività dopo il polling; dettaglio con campi mancanti; 404. Test Playwright (API simulata) a 375 px su elenco e dettaglio: `scrollWidth <= innerWidth`.
+- Test: elenco con filtro e paginazione; riga "in elaborazione" che diventa attività dopo il polling; dettaglio con campi mancanti; 404. Test Playwright (API simulata) a 375 px e a 1280 px su elenco e dettaglio: `scrollWidth <= innerWidth`; a 375 px le righe sono schede e c'è la navigazione in basso, a 1280 px tabella e barra laterale.
 
 **Test cycle:**
 1. Scrivere i test.
@@ -716,13 +720,13 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T20: Verifica finale e aggiornamento dell'architettura
 
 **Status:** pending
-**Covers:** REQ-005, REQ-030, REQ-033, REQ-034; AC-001, AC-013; DEC-004, DEC-005, DEC-009, DEC-012
+**Covers:** REQ-005, REQ-030, REQ-033, REQ-034, REQ-037, REQ-038; AC-001, AC-013; DEC-004, DEC-005, DEC-009, DEC-012, DEC-015
 **Depends on:** T19
 **Tier:** standard — verifica complessiva e allineamento documentale.
 
 **Action:**
-- Eseguire la verifica finale completa e una prova manuale di AC-001 dal browser, anche a 375 px; provare l'avvio da zero seguendo `docs/getting-started.md`.
-- Aggiornare la documentazione in base a quanto realizzato: `ARCHITECTURE/adr/0003-messaggistica-nats.md` (stato `Accettata` se il prototipo ha confermato NATS, con i problemi incontrati), `ARCHITECTURE/adr/0004` (EF Core + COPY, decisione chiusa, permessi sulle hypertable), `ARCHITECTURE/01-services.md` (un progetto per servizio, `Messaging`), `ARCHITECTURE/02-communication.md` (stream `EVENTS`/`DLQ` con prefissi espliciti, stream a colonne arrotondato, `max_payload`), `ARCHITECTURE/05-infrastructure.md` (script al posto di Aspire per ora), `README.md` dei servizi (stato, endpoint, dati posseduti).
+- Eseguire la verifica finale completa e una prova manuale di AC-001 dal browser, a 375 px e a 1280 px; provare l'avvio da zero seguendo `docs/getting-started.md`.
+- Aggiornare la documentazione in base a quanto realizzato: `ARCHITECTURE/adr/0003-messaggistica-nats.md` (stato `Accettata` se il prototipo ha confermato NATS, con i problemi incontrati), `ARCHITECTURE/adr/0004` (EF Core + COPY, decisione chiusa, permessi sulle hypertable), `ARCHITECTURE/01-services.md` (un progetto per servizio, `Messaging`), `ARCHITECTURE/02-communication.md` (stream `EVENTS`/`DLQ` con prefissi espliciti, stream a colonne arrotondato, `max_payload`), `ARCHITECTURE/05-infrastructure.md` (script al posto di Aspire per ora), `ARCHITECTURE/04-frontend.md` (stato reale del front-end), `README.md` dei servizi (stato, endpoint, dati posseduti).
 - Annotare in `context.md` ogni deviazione dal piano e le azioni umane compiute.
 
 **Verification:**
@@ -735,6 +739,30 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Suggested commit:**
 `docs(architecture): aggiorna ADR e documenti dopo lo scheletro del sistema`
 
+### T21: Guscio nativo Capacitor (dopo lo scheletro)
+
+**Status:** pending
+**Covers:** DEC-015
+**Depends on:** T20
+**Tier:** standard — non fa parte della verifica finale dello scheletro; si avvia solo con un via libera esplicito dell'utente.
+
+**Action:**
+- Azioni umane da confermare prima di iniziare: per l'Android, Android Studio con SDK sul PC Windows; per l'iOS, l'account Apple Developer (99 $/anno) e una pipeline di compilazione iOS su macchine macOS nel cloud (non c'è un Mac), da scegliere insieme.
+- Aggiungere Capacitor a `src/web` (`capacitor.config.ts`, progetto Android; il progetto iOS solo quando c'è la compilazione cloud), con la base URL dell'API verso un gateway raggiungibile dal telefono (`VITE_API_BASE_URL`).
+- Gateway: ammettere le origini del guscio (`capacitor://localhost`, `https://localhost`) con una configurazione CORS esplicita e testata (oggi il gateway non ha CORS); nessuna origine con carattere jolly.
+- Verificare sul dispositivo: elenco, dettaglio e upload di un file dal selettore di sistema, margini sicuri, tasto indietro.
+- Valutare se serve almeno una funzione nativa reale per la pubblicazione (guideline 4.2 di Apple) prima di tentare gli store.
+
+**Verification:**
+- Run: build Android di debug e prova su un dispositivo o emulatore; test del gateway sulle origini ammesse.
+- Expected: l'app si avvia, mostra l'elenco e carica un file; il gateway risponde solo alle origini elencate.
+
+**Done when:**
+- Android funzionante; per iOS, la pipeline scelta e lo stato documentati in `context.md`.
+
+**Suggested commit:**
+`feat(web): aggiunge guscio nativo Capacitor`
+
 ## Final verification
 
 1. `docker compose -f deploy/compose.yaml up -d` (infrastruttura; dopo modifiche allo script di inizializzazione prima `down -v`).
@@ -742,7 +770,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 3. `dotnet test TriMetric.slnx` (inclusi `tests/TriMetric.IntegrationTests` e `tests/TriMetric.TestInfrastructure.Tests`)
 4. `pnpm -C src/web install --frozen-lockfile; pnpm -C src/web lint; pnpm -C src/web test; pnpm -C src/web test:e2e; pnpm -C src/web build`
 5. Con i servizi avviati: `pnpm -C src/web gen:api; git diff --exit-code src/web/src/shared/api`
-6. Prova manuale: carica un GPX e un FIT dal browser; verifica elenco, dettaglio, doppio caricamento, file non valido, vista a 375 px.
+6. Prova manuale: carica un GPX e un FIT dal browser; verifica elenco, dettaglio, doppio caricamento, file non valido, viste a 375 px e a 1280 px.
 7. Copertura: ogni `REQ-*` e `AC-*` della tabella ha un esito verificato.
 
 ## Risks and rollback
@@ -753,11 +781,13 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 - **Dimensione degli eventi:** limite 8 MB, 100.000 punti e arrotondamento (DEC-012); se insufficiente, evento versione 2 con claim check.
 - **NATS:** se il prototipo mostra attriti seri, ADR 0003 prevede il passaggio a RabbitMQ; le modifiche restano confinate in `Messaging`.
 - **Migrazioni:** mai applicate a mano; il rollback è `dotnet ef migrations remove` solo su richiesta esplicita e prima di qualsiasi applicazione.
-- **Portata del piano:** 20 task, 12 dei quali `strong` con revisione indipendente per task; il costo di esecuzione è alto e si può rallentare fermandosi dopo T07 (messaggistica) o T15 (backend completo) per rivalutare.
+- **Portata del piano:** 21 task (T21, il guscio nativo, viene dopo lo scheletro), 12 dei quali `strong` con revisione indipendente per task; il costo di esecuzione è alto e si può rallentare fermandosi dopo T07 (messaggistica) o T15 (backend completo) per rivalutare.
+- **Guscio nativo (T21):** su iPhone serve l'account Apple Developer e una compilazione su macchine macOS nel cloud (non c'è un Mac); l'Android si compila da Windows. Il gateway oggi non ha CORS. Le guideline di Apple possono respingere un'app che sia solo un sito impacchettato. Lo scheletro non dipende da nulla di tutto questo (DEC-015).
 - **Rollback generale:** il lavoro è su `feature/walking-skeleton-import`; tornare a `master` annulla tutto senza effetti sull'infrastruttura (i volumi Docker di sviluppo si ricreano con `docker compose down -v`).
 
 ## Review record
 
 - 2026-11-12 — revisione indipendente (agente separato): **Problemi trovati**. Bloccanti accolti e corretti: sovrapposizione di subject tra `EVENTS` (`*.*.*`) e `DLQ` (DEC-005); permessi per `create_hypertable` (verificati con un esperimento, DEC-014, task T04); convenzione `snake_case`, tabella di storia e `IDesignTimeDbContextFactory` (DEC-003); dimensione dell'evento nel caso peggiore con arrotondamento e test (DEC-012, T02, T08, T15); fixture di test condivise con porta NATS fissa (DEC-013, T04); test mancanti per REQ-003, REQ-010, REQ-019, REQ-020; tier alzati a `strong` per T02, T08, T13, T14 (e T09–T12); T04 e T07 vecchi spezzati (ora T04–T07 e T09–T10); comandi PowerShell corretti; controllo automatico a 375 px. Osservazioni non bloccanti recepite: schema `Deny` per il 401, `DisableAntiforgery`, limite di Kestrel, casing di `Sport`, `ON CONFLICT DO NOTHING`, `AckProgress`, intervallo di polling del relay, basi URL del client web, `127.0.0.1`, versione di pnpm e di xunit.
 - 2026-11-12 — secondo passaggio (stesso revisore indipendente): un solo problema bloccante, **T09 non dipendeva da T08** (il progetto `TriMetric.Ingestion` nasce in T08); corretto con `Depends on: T03, T05, T06, T08`. Tutti i problemi del primo passaggio verificati come risolti nel contenuto dei task. Osservazioni recepite: riga REQ-020 della tabella (test di bind in T09 e T11), riferimento a T20 in DEC-004, collegamento del gateway ai servizi nei test di integrazione (Kestrel su porta effimera con destinazioni YARP sovrascritte), secondo utente con una seconda factory, isolamento dei test con un solo database e `TRUNCATE`, `COPY` sulla connessione e transazione del `DbContext`, script `test:e2e` e download dei browser di Playwright come azione umana, test dell'avanzamento in T17, divieto di `EnableSensitiveDataLogging`. Resta il suggerimento di dividere T08 in GPX e FIT se il contesto non basta (valutazione all'esecuzione). Versioni `EFCore.NamingConventions` 10.0.1 e `dotnet-ef` 10.0.x verificate su NuGet dal controller.
+- 2026-11-17 — su richiesta dell'utente, adattato il front-end (T16–T18, T20) e aggiunto T21: app web unica con due modalità di layout (telefono e desktop), predisposta per un guscio nativo Capacitor che si aggiunge dopo T20 (DEC-015, REQ-037, REQ-038). Il rilievo I1 di T14 (413 non leggibile per file grandi) è recepito in T17.
 - Stato finale: nessun problema bloccante aperto.
