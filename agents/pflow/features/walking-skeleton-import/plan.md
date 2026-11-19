@@ -2,7 +2,7 @@
 schema_version: 1
 status: ready
 tracking_ref: null
-updated_at: 2026-11-17
+updated_at: 2026-11-19
 ---
 
 # Implementation Plan: Scheletro del sistema e import di file GPX/FIT
@@ -13,7 +13,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 
 ## Global constraints
 
-- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-015): ogni task cita quelle che applica.
+- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-016): ogni task cita quelle che applica.
 - Target `net10.0`, SDK fissato da `global.json` (DEC-004). Un progetto per servizio.
 - Nessun codice condiviso di produzione oltre a `contracts`, `ServiceDefaults`, `Messaging`; nessuna dipendenza di questi da un servizio; un servizio non legge lo schema di un altro (REQ-023). `tests/TriMetric.TestInfrastructure` è codice di test condiviso (DEC-013).
 - Ogni endpoint dei servizi usa `RequireAuthorization()` e legge `userId` dal `ClaimsPrincipal`, mai dalla richiesta (DEC-006). Ogni servizio espone `public partial class Program` per i test con `WebApplicationFactory`.
@@ -54,6 +54,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 | REQ-026 | AC-001, AC-004 | T17 | `pnpm -C src/web test` |
 | REQ-027, REQ-028 | AC-001, AC-010 | T18 | `pnpm -C src/web test` |
 | REQ-030, REQ-037 | AC-001 | T16, T17, T18 | controllo automatico `scrollWidth <= innerWidth` a 375 px e a 1280 px (Playwright); navigazione in basso sotto 768 px e barra laterale da 768 px |
+| REQ-039 | — | T16 | test del tema (sistema/chiaro/scuro, persistenza) e della parità delle chiavi di traduzione |
 | REQ-038 | — | T16, T17 | test della base URL configurabile; regola di lint su `localStorage` e `window.open`; metadati di viewport |
 | REQ-032 | AC-001…AC-008, AC-012, AC-014 | T15 | `dotnet test tests/TriMetric.IntegrationTests` |
 | REQ-033 | AC-013 | T19 | revisione del documento e prova da zero in T20 |
@@ -608,7 +609,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T16: Scaffold del frontend React
 
 **Status:** pending
-**Covers:** REQ-025, REQ-029, REQ-030, REQ-037, REQ-038; AC-013; DEC-007, DEC-009, DEC-015
+**Covers:** REQ-025, REQ-029, REQ-030, REQ-037, REQ-038, REQ-039; AC-013; DEC-007, DEC-009, DEC-015, DEC-016
 **Depends on:** T10, T13
 **Tier:** standard — scaffold con struttura e comandi definiti.
 
@@ -621,6 +622,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 - Script `gen:api`: genera `src/shared/api/ingestion.d.ts` e `activities.d.ts` da `http://127.0.0.1:5081/openapi/v1.json` e `http://127.0.0.1:5082/openapi/v1.json` (servizi avviati); i file generati sono committati.
 - Layout a due modalità (DEC-015, REQ-037): sotto 768 px navigazione in basso, contenuto a colonna e bersagli di tocco di almeno 44 px; da 768 px barra laterale. Voci di navigazione: Attività, Carica. Test del layout (sia delle due modalità sia dello scorrimento orizzontale a 375 px e a 1280 px) e delle funzioni di formattazione.
 - Predisposizione al guscio nativo (DEC-015, REQ-038): `VITE_API_BASE_URL` (predefinito `/api`, documentato in `.env.example`) da cui derivano le due basi del client; `viewport-fit=cover` e margini `env(safe-area-inset-*)` nel layout; modulo `shared/lib/storage` come unico accesso a `localStorage`, con regola di lint che vieta `localStorage` e `window.open` altrove; nessun service worker né plugin PWA; instradamento servito dalla radice. Test: la base URL cambia con la variabile; il layout rispetta i margini sicuri.
+- Aspetto, lingua e componenti (DEC-016, REQ-039): variabili di tema semantiche (sfondo, superficie, testo, testo secondario, bordo, accento blu, pericolo) in un solo punto, con tema chiaro e scuro automatico e interruttore a tre posizioni (Sistema, Chiaro, Scuro) salvato con `shared/lib/storage` e applicato prima del primo disegno (nessun lampo di tema sbagliato); caratteri di sistema; `i18next` e `react-i18next` con italiano e inglese (italiano predefinito, inglese se il browser non è italiano) e selettore di lingua accanto all'interruttore; tutti i testi nei file di traduzione, con un test che le due lingue abbiano le stesse chiavi; formattazione con `Intl` nella lingua corrente; componenti di base scritti a mano in `shared/ui` (nessun shadcn/ui), icone `lucide-react`.
 - Non avviare il dev server con `--host` per provare da un telefono sulla rete locale: i servizi usano l'identità di sviluppo fissa; solo con un sì esplicito dell'utente e su rete fidata (DEC-015).
 
 **Test cycle:**

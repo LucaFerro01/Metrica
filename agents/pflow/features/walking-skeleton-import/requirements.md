@@ -93,6 +93,7 @@ Il repository contiene solo documentazione (`README.md`, `ARCHITECTURE/`), i REA
 - **REQ-029:** I tipi del client API del web sono generati dalla descrizione OpenAPI di `activities` e dell'upload di `ingestion`, non scritti a mano.
 - **REQ-030:** L'interfaccia è utilizzabile su schermo di telefono (layout responsivo, nessuno scorrimento orizzontale a 375 px di larghezza).
 - **REQ-037:** Le stesse pagine e gli stessi percorsi hanno due modalità di layout (DEC-015): telefono (sotto 768 px: navigazione in basso, contenuto a colonna, righe dell'elenco come schede, bersagli di tocco di almeno 44 px) e desktop (da 768 px: barra laterale, elenco a tabella); nessuno scorrimento orizzontale né a 375 px né a 1280 px.
+- **REQ-039:** L'interfaccia segue il tema chiaro o scuro del sistema e offre un interruttore a tre posizioni (Sistema, Chiaro, Scuro) che si ricorda; è disponibile in italiano e in inglese, con la stessa chiave in entrambe le lingue per ogni testo (DEC-016).
 - **REQ-038:** Il front-end è predisposto per un guscio nativo senza cambiare architettura (DEC-015): base URL dell'API configurabile in fase di build (`VITE_API_BASE_URL`, predefinito `/api`), margini sicuri dello schermo (`viewport-fit=cover` e `env(safe-area-inset-*)`), nessuna dipendenza da funzioni solo da browser (nessun `window.open`, nessun download tramite link, nessun service worker, nessun accesso diretto a `localStorage` fuori da `shared/lib/storage`), selezione dei file con `<input type="file">`, instradamento servito dalla radice.
 
 ### Verifica
