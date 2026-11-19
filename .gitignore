@@ -18,6 +18,7 @@ dist/
 .vite/
 coverage/
 playwright-report/
+test-results/
 
 # Editor e sistema
 .idea/

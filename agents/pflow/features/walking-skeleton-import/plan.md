@@ -608,7 +608,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T16: Scaffold del frontend React
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-025, REQ-029, REQ-030, REQ-037, REQ-038, REQ-039; AC-013; DEC-007, DEC-009, DEC-015, DEC-016
 **Depends on:** T10, T13
 **Tier:** standard — scaffold con struttura e comandi definiti.

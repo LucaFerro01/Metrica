@@ -1,0 +1,48 @@
+{
+  "app": {
+    "name": "TriMetric"
+  },
+  "nav": {
+    "bottomLabel": "Bottom navigation",
+    "sideLabel": "Sidebar",
+    "activities": "Activities",
+    "upload": "Upload"
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language",
+    "it": "Italiano",
+    "en": "English",
+    "short": {
+      "it": "IT",
+      "en": "EN"
+    }
+  },
+  "common": {
+    "unavailable": "not available"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The requested address does not exist.",
+    "back": "Go to activities"
+  },
+  "activities": {
+    "list": {
+      "title": "Activities",
+      "placeholder": "The activity list is coming in the next step."
+    },
+    "detail": {
+      "title": "Activity details",
+      "placeholder": "Activity {{id}}: the details are coming in the next step."
+    },
+    "upload": {
+      "title": "Upload a file",
+      "placeholder": "Uploading .gpx and .fit files is coming in the next step."
+    }
+  }
+}
