@@ -1,4 +1,4 @@
-# TriMetric
+# Metrica
 
 ## Purpose
 Piattaforma web (desktop e mobile) che unisce gli allenamenti di corsa, bici e nuoto, con analisi e programmazione, a complemento di Strava

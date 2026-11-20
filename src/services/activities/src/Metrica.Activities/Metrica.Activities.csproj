@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <!-- Servizio activities: host web, persistenza (schema "activities") e scrittura degli stream nella hypertable con COPY binario.
+       Il consumo di ActivityImported (T12) e le API di lettura GET /activities e GET /activities/{id} (T13) sono qui. Nessun log di contenuto
+       delle attivita' (coordinate, frequenza cardiaca): REQ-034. -->
+
+  <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Solo strumenti di progettazione (dotnet ef): non deve propagarsi ai progetti che referenziano il servizio. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\shared\contracts\Metrica.Contracts\Metrica.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\ServiceDefaults\Metrica.ServiceDefaults\Metrica.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\Messaging\Metrica.Messaging\Metrica.Messaging.csproj" />
+  </ItemGroup>
+
+</Project>

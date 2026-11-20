@@ -225,7 +225,7 @@ describe('dettaglio: assente, non valido, errori', () => {
 
   it('404 con corpo ProblemDetails: stessa pagina, senza testo del server', async () => {
     stubActivitiesApi(() =>
-      jsonResponse({ type: 'urn:trimetric:problem:activity-not-found', detail: 'SEGRETO', status: 404 }, 404),
+      jsonResponse({ type: 'urn:metrica:problem:activity-not-found', detail: 'SEGRETO', status: 404 }, 404),
     );
     await mount();
     expect(await screen.findByRole('heading', { level: 1, name: 'Attività non trovata' })).toBeInTheDocument();

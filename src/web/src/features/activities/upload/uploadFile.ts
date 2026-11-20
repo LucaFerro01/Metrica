@@ -15,7 +15,7 @@ type UploadResponse = components['schemas']['UploadResponse'];
 type UploadBodyField = keyof operations['UploadActivityFile']['requestBody']['content']['multipart/form-data'];
 const FILE_FIELD: UploadBodyField = 'file';
 
-const PROBLEM_TYPE_PREFIX = 'urn:trimetric:problem:';
+const PROBLEM_TYPE_PREFIX = 'urn:metrica:problem:';
 
 /** Codici `type` dei ProblemDetails di `POST /uploads` (ingestion, `UploadProblems.cs`). */
 export const PROBLEM_CODES = [
@@ -89,7 +89,7 @@ function isProblemCode(value: string): value is ProblemCode {
   return (PROBLEM_CODES as readonly string[]).includes(value);
 }
 
-/** Il codice del ProblemDetails (`urn:trimetric:problem:<codice>`) se riconosciuto, altrimenti `null`. */
+/** Il codice del ProblemDetails (`urn:metrica:problem:<codice>`) se riconosciuto, altrimenti `null`. */
 function toProblemCode(body: unknown): ProblemCode | null {
   if (!isRecord(body) || typeof body.type !== 'string') return null;
   if (!body.type.startsWith(PROBLEM_TYPE_PREFIX)) return null;

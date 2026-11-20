@@ -4,8 +4,8 @@ Punto d'ingresso unico verso i servizi (YARP). **Non contiene logica di business
 
 - **Responsabilità:** routing `/api/<servizio>/...`, confine di sicurezza sull'identità del client, limite del corpo delle richieste. Previsti più avanti: validazione dei token, rate limiting, CORS, inoltro del webhook di Strava a `ingestion`.
 - **Dati posseduti:** nessuno.
-- **Eventi:** nessuno (nessuna dipendenza da NATS né da `TriMetric.Messaging`).
-- **Dipendenze:** solo `Yarp.ReverseProxy` e `TriMetric.ServiceDefaults` (correlationId, `/health/live`, telemetria, log JSON).
+- **Eventi:** nessuno (nessuna dipendenza da NATS né da `Metrica.Messaging`).
+- **Dipendenze:** solo `Yarp.ReverseProxy` e `Metrica.ServiceDefaults` (correlationId, `/health/live`, telemetria, log JSON).
 - **Stato:** walking skeleton implementato (T14).
 
 Vedi [`ARCHITECTURE/01-services.md`](../../../ARCHITECTURE/01-services.md).
@@ -92,5 +92,5 @@ il processo è vivo: il gateway non ha database e non sonda i backend, la cui sa
 
 ## Test
 
-`dotnet test src/services/gateway/tests/TriMetric.Gateway.Tests`: server di prova veri su loopback con porta effimera al posto dei servizi
+`dotnet test src/services/gateway/tests/Metrica.Gateway.Tests`: server di prova veri su loopback con porta effimera al posto dei servizi
 (nessun contenitore, nessun servizio reale; le porte 5080-5082 non si usano).

@@ -12,7 +12,7 @@ export type ResolvedTheme = 'light' | 'dark';
 export const THEME_PREFERENCES: readonly ThemePreference[] = ['system', 'light', 'dark'];
 
 /** Chiave di storage della preferenza. Deve coincidere con quella letta dallo script inline di `index.html`. */
-export const THEME_STORAGE_KEY = 'trimetric.theme';
+export const THEME_STORAGE_KEY = 'metrica.theme';
 
 const DARK_QUERY = '(prefers-color-scheme: dark)';
 

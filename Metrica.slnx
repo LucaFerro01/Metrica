@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/shared/contracts/Metrica.Contracts/Metrica.Contracts.csproj" />
+    <Project Path="src/shared/ServiceDefaults/Metrica.ServiceDefaults/Metrica.ServiceDefaults.csproj" />
+    <Project Path="src/shared/Messaging/Metrica.Messaging/Metrica.Messaging.csproj" />
+    <Project Path="src/services/ingestion/src/Metrica.Ingestion/Metrica.Ingestion.csproj" />
+    <Project Path="src/services/activities/src/Metrica.Activities/Metrica.Activities.csproj" />
+    <Project Path="src/services/gateway/src/Metrica.Gateway/Metrica.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="src/shared/contracts/tests/Metrica.Contracts.Tests/Metrica.Contracts.Tests.csproj" />
+    <Project Path="src/shared/ServiceDefaults/tests/Metrica.ServiceDefaults.Tests/Metrica.ServiceDefaults.Tests.csproj" />
+    <Project Path="src/shared/Messaging/tests/Metrica.Messaging.Tests/Metrica.Messaging.Tests.csproj" />
+    <Project Path="src/services/ingestion/tests/Metrica.Ingestion.Tests/Metrica.Ingestion.Tests.csproj" />
+    <Project Path="src/services/activities/tests/Metrica.Activities.Tests/Metrica.Activities.Tests.csproj" />
+    <Project Path="src/services/gateway/tests/Metrica.Gateway.Tests/Metrica.Gateway.Tests.csproj" />
+    <Project Path="tests/Metrica.TestInfrastructure/Metrica.TestInfrastructure.csproj" />
+    <Project Path="tests/Metrica.TestInfrastructure.Tests/Metrica.TestInfrastructure.Tests.csproj" />
+    <Project Path="tests/Metrica.IntegrationTests/Metrica.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

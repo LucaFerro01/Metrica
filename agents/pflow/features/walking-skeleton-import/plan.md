@@ -15,7 +15,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 
 - Decisioni vincolanti in `decisions.md` (DEC-001…DEC-017): ogni task cita quelle che applica.
 - Target `net10.0`, SDK fissato da `global.json` (DEC-004). Un progetto per servizio.
-- Nessun codice condiviso di produzione oltre a `contracts`, `ServiceDefaults`, `Messaging`; nessuna dipendenza di questi da un servizio; un servizio non legge lo schema di un altro (REQ-023). `tests/TriMetric.TestInfrastructure` è codice di test condiviso (DEC-013).
+- Nessun codice condiviso di produzione oltre a `contracts`, `ServiceDefaults`, `Messaging`; nessuna dipendenza di questi da un servizio; un servizio non legge lo schema di un altro (REQ-023). `tests/Metrica.TestInfrastructure` è codice di test condiviso (DEC-013).
 - Ogni endpoint dei servizi usa `RequireAuthorization()` e legge `userId` dal `ClaimsPrincipal`, mai dalla richiesta (DEC-006). Ogni servizio espone `public partial class Program` per i test con `WebApplicationFactory`.
 - Istanti in UTC, unità SI (metri, secondi, watt, m/s). `Sport` serializzato come stringa minuscola ovunque (DEC-005).
 - Nei log mai coordinate, frequenza cardiaca o contenuto dei file (REQ-034).
@@ -30,11 +30,11 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 
 | Requirement | Acceptance | Tasks | Verification |
 |---|---|---|---|
-| REQ-001, REQ-002 | AC-013 | T01 | `dotnet build TriMetric.slnx -warnaserror` |
-| REQ-003 | AC-009 | T03 | `dotnet test src/shared/ServiceDefaults/tests/TriMetric.ServiceDefaults.Tests` (health, `ready`, `correlationId` nei log, OTel registrato) |
-| REQ-004 | — | T02 | `dotnet test src/shared/contracts/tests/TriMetric.Contracts.Tests` |
+| REQ-001, REQ-002 | AC-013 | T01 | `dotnet build Metrica.slnx -warnaserror` |
+| REQ-003 | AC-009 | T03 | `dotnet test src/shared/ServiceDefaults/tests/Metrica.ServiceDefaults.Tests` (health, `ready`, `correlationId` nei log, OTel registrato) |
+| REQ-004 | — | T02 | `dotnet test src/shared/contracts/tests/Metrica.Contracts.Tests` |
 | REQ-005 | AC-013 | T19 | prova di `scripts/dev.ps1` su clone pulito (T20) |
-| REQ-006, REQ-009 | AC-001, AC-004 | T10 | `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests` |
+| REQ-006, REQ-009 | AC-001, AC-004 | T10 | `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests` |
 | REQ-007, REQ-008, REQ-031 | AC-001, AC-002 | T08, T10 | test dei parser con file di esempio e test di dedup |
 | REQ-010 | AC-004 | T08, T10 | parser che onorano il token; test di timeout con parser lento |
 | REQ-011 | AC-003 | T10, T15 | test di dedup (anche concorrente) e in integrazione |
@@ -43,7 +43,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 | REQ-014, REQ-015 | AC-006 | T07, T12, T15 | test consumatore idempotente |
 | REQ-016 | AC-014 | T11, T12 | test: tabella risulta hypertable, `COPY` di 50.000 punti |
 | REQ-017 | AC-012 | T07, T15 | test di retry e DLQ |
-| REQ-018 | AC-010, AC-011 | T13 | `dotnet test src/services/activities/tests/TriMetric.Activities.Tests` |
+| REQ-018 | AC-010, AC-011 | T13 | `dotnet test src/services/activities/tests/Metrica.Activities.Tests` |
 | REQ-019 | — | T13 | test che `/openapi/v1.json` espone `ActivityListItem`, `ActivityDetail`, `StreamColumns` |
 | REQ-020 | AC-001 | T14 (+ test di bind in T09, T11) | test di instradamento e test sul solo bind su `127.0.0.1` |
 | REQ-021 | AC-009 | T03, T10, T13 | test in ambiente non-Development (401) |
@@ -57,7 +57,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 | REQ-040 | AC-001 | T18 | test dell'API di `activities` (filtro esatto, isolamento tra utenti, validazione) e del web (riga «in elaborazione» che si risolve per un'attività con data vecchia) |
 | REQ-039 | — | T16 | test del tema (sistema/chiaro/scuro, persistenza) e della parità delle chiavi di traduzione |
 | REQ-038 | — | T16, T17 | test della base URL configurabile; regola di lint su `localStorage` e `window.open`; metadati di viewport |
-| REQ-032 | AC-001…AC-008, AC-012, AC-014 | T15 | `dotnet test tests/TriMetric.IntegrationTests` |
+| REQ-032 | AC-001…AC-008, AC-012, AC-014 | T15 | `dotnet test tests/Metrica.IntegrationTests` |
 | REQ-033 | AC-013 | T19 | revisione del documento e prova da zero in T20 |
 | REQ-034 | — | T03, T15 | test sui log con provider in memoria |
 | REQ-035 | AC-014 | T08, T10, T15 | test con 100.000 e 100.001 punti |
@@ -71,15 +71,15 @@ Recorded in `decisions.md`.
 
 ### Files
 
-- Create: `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `TriMetric.slnx`, `.editorconfig`, `.config/dotnet-tools.json` (T01)
-- Create: `src/shared/contracts/TriMetric.Contracts/**` e `.../tests/TriMetric.Contracts.Tests/**` (T02)
-- Create: `src/shared/ServiceDefaults/TriMetric.ServiceDefaults/**` e `.../tests/TriMetric.ServiceDefaults.Tests/**` (T03)
-- Create: `deploy/nats/nats-server.conf`, `tests/TriMetric.TestInfrastructure/**`, `tests/TriMetric.TestInfrastructure.Tests/**`; Modify: `deploy/compose.yaml`, `deploy/postgres/init/01-schemas.sql` (T04)
-- Create: `src/shared/Messaging/TriMetric.Messaging/**` e `.../tests/TriMetric.Messaging.Tests/**` (T05, T06, T07)
-- Create: `src/services/ingestion/src/TriMetric.Ingestion/**` e `.../tests/TriMetric.Ingestion.Tests/**` (T08, T09, T10)
-- Create: `src/services/activities/src/TriMetric.Activities/**` e `.../tests/TriMetric.Activities.Tests/**` (T11, T12, T13)
-- Create: `src/services/gateway/src/TriMetric.Gateway/**` e `.../tests/TriMetric.Gateway.Tests/**` (T14)
-- Create: `tests/TriMetric.IntegrationTests/**` (T15)
+- Create: `global.json`, `Directory.Build.props`, `Directory.Packages.props`, `Metrica.slnx`, `.editorconfig`, `.config/dotnet-tools.json` (T01)
+- Create: `src/shared/contracts/Metrica.Contracts/**` e `.../tests/Metrica.Contracts.Tests/**` (T02)
+- Create: `src/shared/ServiceDefaults/Metrica.ServiceDefaults/**` e `.../tests/Metrica.ServiceDefaults.Tests/**` (T03)
+- Create: `deploy/nats/nats-server.conf`, `tests/Metrica.TestInfrastructure/**`, `tests/Metrica.TestInfrastructure.Tests/**`; Modify: `deploy/compose.yaml`, `deploy/postgres/init/01-schemas.sql` (T04)
+- Create: `src/shared/Messaging/Metrica.Messaging/**` e `.../tests/Metrica.Messaging.Tests/**` (T05, T06, T07)
+- Create: `src/services/ingestion/src/Metrica.Ingestion/**` e `.../tests/Metrica.Ingestion.Tests/**` (T08, T09, T10)
+- Create: `src/services/activities/src/Metrica.Activities/**` e `.../tests/Metrica.Activities.Tests/**` (T11, T12, T13)
+- Create: `src/services/gateway/src/Metrica.Gateway/**` e `.../tests/Metrica.Gateway.Tests/**` (T14)
+- Create: `tests/Metrica.IntegrationTests/**` (T15)
 - Create: `src/web/**` (T16–T18)
 - Create: `src/web/capacitor.config.ts`, `src/web/android/`, e le origini ammesse del gateway (T21, dopo lo scheletro)
 - Create: `scripts/dev.ps1`, `scripts/dev.sh`, `docs/getting-started.md`; Modify: `README.md` (T19)
@@ -90,7 +90,7 @@ Recorded in `decisions.md`.
 Produced (nomi e firme di riferimento; se l'implementazione li cambia, il piano si aggiorna prima di proseguire):
 
 ```csharp
-// TriMetric.Contracts
+// Metrica.Contracts
 public sealed record EventEnvelope<T>(Guid Id, string Type, int Version, DateTimeOffset OccurredAt,
     Guid UserId, Guid CorrelationId, T Data);
 public enum Sport { Run, Ride, Swim, Other }   // JSON/DB/API: "run" | "ride" | "swim" | "other"
@@ -109,14 +109,14 @@ public static class EventNames { const string ActivityImported = "ActivityImport
     const string DlqStream = "DLQ"; /* EVENTS: identity.>, ingestion.>, activities.>, analytics.>, training-plan.> ; DLQ: dlq.> */ }
 public static class StreamLimits { const int MaxPoints = 100_000; }
 
-// TriMetric.ServiceDefaults
+// Metrica.ServiceDefaults
 IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder b);   // OTel, health, logging con correlationId
 WebApplication MapServiceDefaults(this WebApplication app);                   // /health/live, /health/ready
 IHostApplicationBuilder AddDevelopmentIdentity(this IHostApplicationBuilder b); // Development: utente fisso `Dev:UserId`; altrimenti schema Deny (401). (T03: firma su IHostApplicationBuilder perché serve l'ambiente)
 Guid GetUserId(this ClaimsPrincipal p);                                       // claim "sub": uno solo, UUID formato "D", non vuoto; altrimenti InvalidOperationException
 // Il middleware del correlationId è registrato da AddServiceDefaults (IStartupFilter); MapServiceDefaults mappa solo gli health.
 
-// TriMetric.Messaging
+// Metrica.Messaging
 public interface IOutbox { void Add<T>(string subject, EventEnvelope<T> envelope); } // nel change tracker del DbContext del chiamante
 public interface IOutboxDbContext { DbSet<OutboxMessage> Outbox { get; } }
 ModelBuilder ApplyOutbox(this ModelBuilder b);                                // tabella `outbox` nello schema del servizio
@@ -129,13 +129,13 @@ IServiceCollection AddEventConsumer<TDbContext, TData, THandler>(this IServiceCo
     where TDbContext : DbContext, IInboxDbContext where THandler : class, IEventHandler<TData>;
 ModelBuilder ApplyInbox(this ModelBuilder b);                                 // tabella `inbox`
 
-// TriMetric.Ingestion
+// Metrica.Ingestion
 public interface IActivityFileParser { bool CanParse(string fileName); ParsedActivity Parse(Stream content, CancellationToken ct); }
 // POST /uploads (dietro al gateway: POST /api/ingestion/uploads), multipart campo "file"
 //   202 { "uploadId": Guid, "externalId": string, "status": "accepted" } | 200 { "uploadId", "externalId", "status": "duplicate" }
 //   errori ProblemDetails: 400 file vuoto/malformato, 413 troppo grande, 415 tipo non supportato, 422 contenuto non valido / troppi punti / timeout di parsing
 
-// TriMetric.Activities (dietro al gateway: GET /api/activities, GET /api/activities/{id})
+// Metrica.Activities (dietro al gateway: GET /api/activities, GET /api/activities/{id})
 // GET /activities?sport=&page=1&pageSize=20 → { items: ActivityListItem[], page, pageSize, total }
 // ActivityListItem { id, externalId, sport, startTime, distanceMeters, elapsedSeconds, elevationGainMeters }
 // GET /activities/{id}?maxPoints=1000 → ActivityDetail { ...ActivityListItem, movingSeconds, summary, laps, stream: StreamColumns }
@@ -151,11 +151,11 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** light — file di configurazione con specifica esatta e verifica automatica.
 
 **Action:**
-- Creare `global.json` (SDK `11.0.100`, `rollForward: latestFeature`), `Directory.Build.props` (`TargetFramework net10.0`, `Nullable enable`, `ImplicitUsings enable`, `TreatWarningsAsErrors true`), `Directory.Packages.props` con `ManagePackageVersionsCentrally true` e le versioni elencate nei vincoli, `.editorconfig`, `TriMetric.slnx` vuota.
+- Creare `global.json` (SDK `11.0.100`, `rollForward: latestFeature`), `Directory.Build.props` (`TargetFramework net10.0`, `Nullable enable`, `ImplicitUsings enable`, `TreatWarningsAsErrors true`), `Directory.Packages.props` con `ManagePackageVersionsCentrally true` e le versioni elencate nei vincoli, `.editorconfig`, `Metrica.slnx` vuota.
 - Creare `.config/dotnet-tools.json` con `dotnet-ef` alla versione `10.0.15`.
 
 **Verification:**
-- Run: `dotnet --version; dotnet tool restore; dotnet ef --version; dotnet build TriMetric.slnx`
+- Run: `dotnet --version; dotnet tool restore; dotnet ef --version; dotnet build Metrica.slnx`
 - Expected: SDK 11.0.100; `dotnet ef` 10.0.x; build riuscita senza warning.
 
 **Done when:**
@@ -172,18 +172,18 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — definisce il contratto tra servizi (API pubblica interna).
 
 **Action:**
-- Creare `TriMetric.Contracts` con i tipi della sezione Interfacce (record immutabili, solo costanti, nessuna logica) e `ContractJson.Options` (camelCase, enum come stringhe minuscole, `null` esplicito per le colonne assenti).
-- `TriMetric.Contracts.Tests` (xUnit): round-trip di `EventEnvelope<ActivityImported>`; camelCase e `sport` minuscolo (`"run"`); colonne `null`; **test del caso peggiore**: 100.000 punti con **tutte e 8 le colonne** valorizzate con i valori più lunghi possibili dopo l'arrotondamento di DEC-012 (tempo `99999.999`, lat/lon `-123.1234567`, quota `-1234.5`, velocità `12.345`, FC `255`, potenza `2000`, cadenza `255`) → JSON < 8 MB (8.388.608 byte).
-- Aggiungere i progetti a `TriMetric.slnx`.
+- Creare `Metrica.Contracts` con i tipi della sezione Interfacce (record immutabili, solo costanti, nessuna logica) e `ContractJson.Options` (camelCase, enum come stringhe minuscole, `null` esplicito per le colonne assenti).
+- `Metrica.Contracts.Tests` (xUnit): round-trip di `EventEnvelope<ActivityImported>`; camelCase e `sport` minuscolo (`"run"`); colonne `null`; **test del caso peggiore**: 100.000 punti con **tutte e 8 le colonne** valorizzate con i valori più lunghi possibili dopo l'arrotondamento di DEC-012 (tempo `99999.999`, lat/lon `-123.1234567`, quota `-1234.5`, velocità `12.345`, FC `255`, potenza `2000`, cadenza `255`) → JSON < 8 MB (8.388.608 byte).
+- Aggiungere i progetti a `Metrica.slnx`.
 
 **Test cycle:**
 1. Scrivere i test (serializzazione e caso peggiore).
-2. Run `dotnet test src/shared/contracts/tests/TriMetric.Contracts.Tests`; atteso: fallimento (tipi assenti).
+2. Run `dotnet test src/shared/contracts/tests/Metrica.Contracts.Tests`; atteso: fallimento (tipi assenti).
 3. Implementare i record e `ContractJson`.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/shared/contracts/tests/TriMetric.Contracts.Tests`
+- Run: `dotnet test src/shared/contracts/tests/Metrica.Contracts.Tests`
 - Expected: tutti verdi; il test del caso peggiore stampa la dimensione misurata (< 8 MB).
 
 **Done when:**
@@ -214,12 +214,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/shared/ServiceDefaults/tests/TriMetric.ServiceDefaults.Tests`; atteso: fallimento.
+2. Run `dotnet test src/shared/ServiceDefaults/tests/Metrica.ServiceDefaults.Tests`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/shared/ServiceDefaults/tests/TriMetric.ServiceDefaults.Tests`
+- Run: `dotnet test src/shared/ServiceDefaults/tests/Metrica.ServiceDefaults.Tests`
 - Expected: tutti verdi, incluso il 401 fuori da Development.
 
 **Done when:**
@@ -238,18 +238,18 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Action:**
 - Creare `deploy/nats/nats-server.conf` (JetStream con `store_dir /data`, `http: 8222`, `max_payload: 8MB`); modificare `deploy/compose.yaml` perché `nats` parta con `-c /etc/nats/nats-server.conf` montando il file in sola lettura (commento sul suffisso `:Z` per Podman/SELinux).
 - Modificare `deploy/postgres/init/01-schemas.sql` (DEC-014): per ogni ruolo `*_svc` aggiungere `GRANT USAGE ON SCHEMA public` e impostare `search_path = <schema>, public`; mantenere `REVOKE ALL ON SCHEMA public FROM PUBLIC` (nessun `CREATE` su `public`).
-- Creare `tests/TriMetric.TestInfrastructure` (libreria) con `TimescaleFixture` (immagine `docker.io/timescale/timescaledb:latest-pg16`, script `deploy/postgres/init/01-schemas.sql` montato in `docker-entrypoint-initdb.d`, connessione per ogni ruolo `*_svc`; **un solo database** condiviso, isolamento tra test per identificativi e `TRUNCATE`, non con `CREATE DATABASE` che perderebbe estensione e grant) e `NatsFixture` (immagine `docker.io/library/nats:2`, `deploy/nats/nats-server.conf` montato, **porta host fissa** scelta una volta e ripetuta dopo un riavvio, helper `StopAsync/StartAsync`). Aggiungere `tests/TriMetric.TestInfrastructure.Tests` con test di fumo.
+- Creare `tests/Metrica.TestInfrastructure` (libreria) con `TimescaleFixture` (immagine `docker.io/timescale/timescaledb:latest-pg16`, script `deploy/postgres/init/01-schemas.sql` montato in `docker-entrypoint-initdb.d`, connessione per ogni ruolo `*_svc`; **un solo database** condiviso, isolamento tra test per identificativi e `TRUNCATE`, non con `CREATE DATABASE` che perderebbe estensione e grant) e `NatsFixture` (immagine `docker.io/library/nats:2`, `deploy/nats/nats-server.conf` montato, **porta host fissa** scelta una volta e ripetuta dopo un riavvio, helper `StopAsync/StartAsync`). Aggiungere `tests/Metrica.TestInfrastructure.Tests` con test di fumo.
 - Test di fumo: come `activities_svc`, `CREATE TABLE` in `activities` e `create_hypertable` riescono, e l'inserimento funziona; `activities_svc` non legge né scrive nello schema `ingestion` (e viceversa) e non può creare oggetti in `public`; NATS espone `max_payload` = 8 MB (informazioni di connessione) e dopo `StopAsync/StartAsync` la porta è la stessa; un messaggio da circa 6 MB è accettato e uno da oltre 8 MB rifiutato.
 - **Azione umana:** dopo la modifica dello script servono `docker compose -f deploy/compose.yaml down -v` e un nuovo `up -d` (cancella i dati di sviluppo) perché il volume locale applichi lo script.
 
 **Test cycle:**
 1. Scrivere i test di fumo.
-2. Run `dotnet test tests/TriMetric.TestInfrastructure.Tests`; atteso: fallimento (permessi e `max_payload` non ancora configurati).
+2. Run `dotnet test tests/Metrica.TestInfrastructure.Tests`; atteso: fallimento (permessi e `max_payload` non ancora configurati).
 3. Implementare configurazione e fixture.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test tests/TriMetric.TestInfrastructure.Tests`; dopo l'azione umana: `(Invoke-RestMethod http://localhost:8222/varz).max_payload`
+- Run: `dotnet test tests/Metrica.TestInfrastructure.Tests`; dopo l'azione umana: `(Invoke-RestMethod http://localhost:8222/varz).max_payload`
 - Expected: test verdi; `max_payload` = 8388608.
 
 **Done when:**
@@ -267,18 +267,18 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Action:**
 - I subject degli stream si leggono da `EventNames.EventsStreamSubjects` e `EventNames.DlqStreamSubjects` (T02, oggi `static readonly string[]` mutabili): copiarli prima di passarli a NATS.Net e valutare se renderli `IReadOnlyList<string>` secondo ciò che accetta `StreamConfig.Subjects`.
-- `TriMetric.Messaging`: `AddNatsMessaging` (connessione con `Nats:Url`, riconnessione automatica, creazione idempotente degli stream `EVENTS` con i prefissi espliciti `identity.>`, `ingestion.>`, `activities.>`, `analytics.>`, `training-plan.>` e `DLQ` con `dlq.>`, persistenza su file, finestra di deduplicazione di 1 ora).
+- `Metrica.Messaging`: `AddNatsMessaging` (connessione con `Nats:Url`, riconnessione automatica, creazione idempotente degli stream `EVENTS` con i prefissi espliciti `identity.>`, `ingestion.>`, `activities.>`, `analytics.>`, `training-plan.>` e `DLQ` con `dlq.>`, persistenza su file, finestra di deduplicazione di 1 ora).
 - Outbox: entità `OutboxMessage` (`Id`, `Subject`, `Type`, `Payload` bytea, `CreatedAt`, `PublishedAt?`, `Attempts`, `LastError?`), `ApplyOutbox` (tabella `outbox` con indice parziale sui non pubblicati), `IOutbox.Add` (nel change tracker; scrittura con il `SaveChanges` del chiamante, quindi nella stessa transazione).
 - Test (con le fixture di T04): creazione degli stream riuscita, **ripetibile** (idempotente) e senza sovrapposizione di subject (un messaggio su `dlq.x` non finisce in `EVENTS`); `IOutbox.Add` + `SaveChanges` salva evento e dati di dominio in una sola transazione (un fallimento a metà non lascia una riga di outbox orfana).
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests --filter Category=Setup`; atteso: fallimento.
+2. Run `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests --filter Category=Setup`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests --filter "Category=Setup|Category=Outbox"`
+- Run: `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests --filter "Category=Setup|Category=Outbox"`
 - Expected: verdi.
 
 **Done when:**
@@ -301,12 +301,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests --filter Category=Relay`; atteso: fallimento.
+2. Run `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests --filter Category=Relay`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests --filter Category=Relay`
+- Run: `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests --filter Category=Relay`
 - Expected: verdi.
 
 **Done when:**
@@ -332,12 +332,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests --filter Category=Consumer`; atteso: fallimento.
+2. Run `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests --filter Category=Consumer`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/shared/Messaging/tests/TriMetric.Messaging.Tests`
+- Run: `dotnet test src/shared/Messaging/tests/Metrica.Messaging.Tests`
 - Expected: tutti i test di `Messaging` verdi.
 
 **Done when:**
@@ -354,7 +354,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — input non attendibile (XML/binario), rischio di DoS e specifica con casi ambigui.
 
 **Action:**
-- Creare il progetto `TriMetric.Ingestion` (in questo task solo parsing, ancora senza host web) e `TriMetric.Ingestion.Tests`; aggiungerli a `TriMetric.slnx`.
+- Creare il progetto `Metrica.Ingestion` (in questo task solo parsing, ancora senza host web) e `Metrica.Ingestion.Tests`; aggiungerli a `Metrica.slnx`.
 - `ParsedActivity` (SI: sport, inizio UTC, tempo totale e in movimento, distanza, dislivello positivo, riepilogo, giri, punti come colonne **già arrotondate** secondo DEC-012) e `IActivityFileParser`:
   - `GpxParser` con `System.Xml.Linq` e un `XmlReader` indurito (`DtdProcessing.Prohibit`, `XmlResolver = null`, limiti `MaxCharactersInDocument` e `MaxCharactersFromEntities`); estensioni Garmin `TrackPointExtension` per FC e cadenza; più tracce/segmenti uniti in ordine di tempo; distanza calcolata con haversine se assente;
   - `FitParser` con `Garmin.FIT.Sdk`: sport/sottosport, record, giri, sessione; **più sessioni** → un'attività con sport `other`, tempo e distanza sommati.
@@ -366,12 +366,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test con i file di esempio.
-2. Run `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests --filter Category=Parsing`; atteso: fallimento.
+2. Run `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests --filter Category=Parsing`; atteso: fallimento.
 3. Implementare i parser.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests --filter Category=Parsing`
+- Run: `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests --filter Category=Parsing`
 - Expected: tutti verdi; i valori attesi coincidono con quelli verificati a mano.
 
 **Done when:**
@@ -388,13 +388,13 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — migrazione di schema e isolamento dei dati.
 
 **Action:**
-- Host web in `TriMetric.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutbox<IngestionDbContext>()` (senza di esso `IOutbox` non è registrato e T10 fallirebbe a runtime), `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`, **solo in Development**: deviazione consapevole registrata in T09; REQ-019 non impone l'esposizione in altri ambienti e gli script di generazione del client avviano i servizi in Development), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
+- Host web in `Metrica.Ingestion` (il progetto esiste già da T08: si aggiunge l'host senza toccare i parser) (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `AddOutbox<IngestionDbContext>()` (senza di esso `IOutbox` non è registrato e T10 fallirebbe a runtime), `AddOutboxRelay<IngestionDbContext>`, `MapOpenApi` (`/openapi/v1.json`, **solo in Development**: deviazione consapevole registrata in T09; REQ-019 non impone l'esposizione in altri ambienti e gli script di generazione del client avviano i servizi in Development), Kestrel su `127.0.0.1:5081` (da `appsettings.json`), applicazione delle migrazioni all'avvio **solo in `Development`**.
 - `IngestionDbContext` (`HasDefaultSchema("ingestion")`, `UseSnakeCaseNamingConvention()`, `MigrationsHistoryTable("__EFMigrationsHistory","ingestion")`, `ApplyOutbox`, entità `Upload`), `IDesignTimeDbContextFactory<IngestionDbContext>` con stringa di sola progettazione, stringa di connessione `ConnectionStrings:Ingestion` (ruolo `ingestion_svc`).
 - Test: avvio con migrazioni su `TimescaleFixture` (ruolo `ingestion_svc`); la tabella di storia sta in `ingestion`; il ruolo non vede lo schema `activities`; test sul solo bind loopback (`appsettings.json` ha solo `http://127.0.0.1:5081`); in `Production` un endpoint protetto di prova risponde 401.
 - REQ-034: l'`appsettings` del servizio non deve contenere regole di livello specifiche del provider (`Logging:Console:LogLevel:*`) che riattivino il log della query string di `Microsoft.AspNetCore.Hosting.Diagnostics` (il filtro Warning è impostato da `AddServiceDefaults`; una regola specifica del provider lo sovrascriverebbe): aggiungere un test che legge `appsettings*.json` del servizio e lo verifica. Le tracce OpenTelemetry di ASP.NET Core registrano `url.query`: nessun dato personale in query string degli endpoint (i parametri sensibili vanno nel corpo).
 
 **Schema changes:**
-- Migrazione `InitialIngestionSchema` (comando: `dotnet ef migrations add InitialIngestionSchema --project src/services/ingestion/src/TriMetric.Ingestion --output-dir Migrations`), **da creare solo dopo approvazione esplicita**:
+- Migrazione `InitialIngestionSchema` (comando: `dotnet ef migrations add InitialIngestionSchema --project src/services/ingestion/src/Metrica.Ingestion --output-dir Migrations`), **da creare solo dopo approvazione esplicita**:
   - tabella `ingestion.uploads`: `id` uuid PK; `user_id` uuid non nulla; `source` text non nulla; `external_id` text non nulla; `file_name` text non nulla; `size_bytes` bigint non nulla; `created_at` timestamptz non nulla;
   - indice univoco `ux_uploads_user_source_external` su (`user_id`, `source`, `external_id`);
   - tabella `ingestion.outbox`: `id` uuid PK; `subject` text non nulla; `type` text non nulla; `payload` bytea non nulla; `created_at` timestamptz non nulla; `published_at` timestamptz nulla; `attempts` integer non nulla (predefinito 0); `last_error` text nulla;
@@ -406,12 +406,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test (con modello EF; migrazione approvata e generata).
-2. Run `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests --filter Category=Persistence`; atteso: fallimento.
+2. Run `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests --filter Category=Persistence`; atteso: fallimento.
 3. Implementare host, contesto e factory.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests --filter Category=Persistence`
+- Run: `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests --filter Category=Persistence`
 - Expected: verdi; controllo di ambito della migrazione senza operazioni non pianificate né mancanti.
 
 **Done when:**
@@ -436,12 +436,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests`; atteso: fallimento.
+2. Run `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests`; atteso: fallimento.
 3. Implementare l'endpoint.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/ingestion/tests/TriMetric.Ingestion.Tests`
+- Run: `dotnet test src/services/ingestion/tests/Metrica.Ingestion.Tests`
 - Expected: tutti verdi.
 
 **Done when:**
@@ -458,14 +458,14 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — migrazione con hypertable, inserimento massivo e isolamento dei dati.
 
 **Action:**
-- Host web in `TriMetric.Activities` (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `MapOpenApi`, Kestrel su `127.0.0.1:5082`; migrazioni all'avvio solo in `Development`.
+- Host web in `Metrica.Activities` (`public partial class Program`): `AddServiceDefaults`, `AddDevelopmentIdentity`, `AddNatsMessaging`, `MapOpenApi`, Kestrel su `127.0.0.1:5082`; migrazioni all'avvio solo in `Development`.
 - `ActivitiesDbContext` (`HasDefaultSchema("activities")`, snake_case, `MigrationsHistoryTable("__EFMigrationsHistory","activities")`, `ApplyInbox`, entità `Activity`, `ActivityLap`), `IDesignTimeDbContextFactory`, `ConnectionStrings:Activities` (ruolo `activities_svc`).
 - `StreamWriter`: inserimento dei punti con `COPY` binario di Npgsql in `activities.activity_stream` (nomi di colonna espliciti, verificati da un test contro il modello/schema reale), con `time = start_time + offset`. Usa **la connessione e la transazione correnti del `ActivitiesDbContext`** (`Database.GetDbConnection()` e transazione corrente), la stessa dell'inbox e del gestore in T12, così attività, punti e inbox vengono confermati o annullati insieme.
 - La migrazione crea la hypertable con `SELECT create_hypertable('activities.activity_stream', 'time')` (funziona grazie a DEC-014).
 - Test (`TimescaleFixture`): la tabella risulta hypertable (`timescaledb_information.hypertables`); `StreamWriter` salva 50.000 punti in tempo ragionevole (< 10 s) e le colonne `null` restano `null`; `activities_svc` non vede `ingestion`; test sul solo bind loopback.
 
 **Schema changes:**
-- Migrazione `InitialActivitiesSchema` (comando: `dotnet ef migrations add InitialActivitiesSchema --project src/services/activities/src/TriMetric.Activities --output-dir Migrations`), **da creare solo dopo approvazione esplicita**:
+- Migrazione `InitialActivitiesSchema` (comando: `dotnet ef migrations add InitialActivitiesSchema --project src/services/activities/src/Metrica.Activities --output-dir Migrations`), **da creare solo dopo approvazione esplicita**:
   - tabella `activities.activities`: `id` uuid PK; `user_id` uuid non nulla; `source` text non nulla; `external_id` text non nulla; `sport` text non nulla; `start_time` timestamptz non nulla; `elapsed_seconds`, `moving_seconds`, `distance_meters` double precision non nulle; `elevation_gain_meters`, `avg_heart_rate`, `max_heart_rate`, `avg_power_watts`, `avg_cadence` double precision nulle; `created_at` timestamptz non nulla;
   - indice univoco `ux_activities_user_source_external` su (`user_id`, `source`, `external_id`); indice `ix_activities_user_start` su (`user_id`, `start_time` DESC);
   - tabella `activities.activity_laps`: `id` uuid PK; `activity_id` uuid non nulla (FK → `activities.activities.id`, ON DELETE CASCADE); `start_time` timestamptz non nulla; `elapsed_seconds`, `distance_meters` double precision non nulle; indice su `activity_id`;
@@ -479,12 +479,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test (migrazione approvata e generata).
-2. Run `dotnet test src/services/activities/tests/TriMetric.Activities.Tests --filter Category=Persistence`; atteso: fallimento.
+2. Run `dotnet test src/services/activities/tests/Metrica.Activities.Tests --filter Category=Persistence`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/activities/tests/TriMetric.Activities.Tests --filter Category=Persistence`
+- Run: `dotnet test src/services/activities/tests/Metrica.Activities.Tests --filter Category=Persistence`
 - Expected: verdi; hypertable confermata; controllo di ambito della migrazione senza differenze.
 
 **Done when:**
@@ -507,12 +507,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test.
-2. Run `dotnet test src/services/activities/tests/TriMetric.Activities.Tests --filter Category=Consumer`; atteso: fallimento.
+2. Run `dotnet test src/services/activities/tests/Metrica.Activities.Tests --filter Category=Consumer`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/activities/tests/TriMetric.Activities.Tests --filter Category=Consumer`
+- Run: `dotnet test src/services/activities/tests/Metrica.Activities.Tests --filter Category=Consumer`
 - Expected: verdi.
 
 **Done when:**
@@ -536,12 +536,12 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 **Test cycle:**
 1. Scrivere i test (dati inseriti direttamente nel database).
-2. Run `dotnet test src/services/activities/tests/TriMetric.Activities.Tests --filter Category=Api`; atteso: fallimento.
+2. Run `dotnet test src/services/activities/tests/Metrica.Activities.Tests --filter Category=Api`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/activities/tests/TriMetric.Activities.Tests`
+- Run: `dotnet test src/services/activities/tests/Metrica.Activities.Tests`
 - Expected: tutti verdi.
 
 **Done when:**
@@ -558,18 +558,18 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — rimozione di intestazioni di identità e riscrittura dei percorsi (confine di sicurezza).
 
 **Action:**
-- Creare `TriMetric.Gateway` con `AddServiceDefaults`, `Yarp.ReverseProxy` e Kestrel su `localhost:5080`. Rotte: `/api/ingestion/{**remainder}` → `http://127.0.0.1:5081/{**remainder}`; `/api/activities` e `/api/activities/{**remainder}` → `http://127.0.0.1:5082/activities/{**remainder}` (trasformazioni dei percorsi). Le intestazioni di identità del client (`X-User-Id` e simili) vengono rimosse; `Authorization` passa.
+- Creare `Metrica.Gateway` con `AddServiceDefaults`, `Yarp.ReverseProxy` e Kestrel su `localhost:5080`. Rotte: `/api/ingestion/{**remainder}` → `http://127.0.0.1:5081/{**remainder}`; `/api/activities` e `/api/activities/{**remainder}` → `http://127.0.0.1:5082/activities/{**remainder}` (trasformazioni dei percorsi). Le intestazioni di identità del client (`X-User-Id` e simili) vengono rimosse; `Authorization` passa.
 - Limite del corpo allineato a `Upload:MaxBytes` (predefinito **32 MiB = 33.554.432** dopo la revisione di T10) più 1 MiB di overhead multipart per la richiesta attraverso il gateway; `/health/live`. Il controllo lato client del web (T17) usa lo stesso limite di 32 MiB.
 - Test con server di prova al posto dei servizi: `POST /api/ingestion/uploads`, `GET /api/activities`, `GET /api/activities/{id}` arrivano ai backend con il percorso atteso (con e senza barra finale); un `X-User-Id` del client non raggiunge i backend; il corpo multipart arriva integro.
 
 **Test cycle:**
 1. Scrivere i test con backend simulati.
-2. Run `dotnet test src/services/gateway/tests/TriMetric.Gateway.Tests`; atteso: fallimento.
+2. Run `dotnet test src/services/gateway/tests/Metrica.Gateway.Tests`; atteso: fallimento.
 3. Implementare.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test src/services/gateway/tests/TriMetric.Gateway.Tests`
+- Run: `dotnet test src/services/gateway/tests/Metrica.Gateway.Tests`
 - Expected: tutti verdi.
 
 **Done when:**
@@ -586,19 +586,19 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 **Tier:** strong — orchestrazione di contenitori reali e più servizi.
 
 **Action:**
-- Creare `tests/TriMetric.IntegrationTests` (xUnit) con le fixture di `TriMetric.TestInfrastructure` (DEC-013): i tre servizi avviati in processo con le stringhe di connessione per ruolo. Collegamento del gateway ai servizi: ogni servizio si avvia su **Kestrel con porta effimera** (non `TestServer`) e il gateway riceve le destinazioni YARP sovrascritte (`ReverseProxy:Clusters:*:Destinations:*:Address`) con gli indirizzi reali; scelta registrata qui perché `WebApplicationFactory` con `TestServer` non ha porte.
+- Creare `tests/Metrica.IntegrationTests` (xUnit) con le fixture di `Metrica.TestInfrastructure` (DEC-013): i tre servizi avviati in processo con le stringhe di connessione per ruolo. Collegamento del gateway ai servizi: ogni servizio si avvia su **Kestrel con porta effimera** (non `TestServer`) e il gateway riceve le destinazioni YARP sovrascritte (`ReverseProxy:Clusters:*:Destinations:*:Address`) con gli indirizzi reali; scelta registrata qui perché `WebApplicationFactory` con `TestServer` non ha porte.
 - Isolamento tra test: un solo database (quello dell'init script, con ruoli, schemi, estensione e grant reali); ogni test usa **identificativi propri** (`userId` nuovo, file con contenuto unico) e, dove serve, svuota con `TRUNCATE` le tabelle `outbox`, `inbox` e `uploads`/`activities` del proprio scenario. Niente `CREATE DATABASE` separati (perderebbero estensione e grant).
 - Scenari: upload GPX → elenco → dettaglio (AC-001); FIT con FC e potenza (AC-002); doppio upload (AC-003); file non validi (AC-004); NATS fermato e riavviato con la stessa porta (AC-005); stesso evento consegnato due volte (AC-006); isolamento tra utenti (AC-007); `activities_svc` e `ingestion_svc` non leggono né scrivono nello schema dell'altro (AC-008); messaggio non elaborabile in `DLQ` e successivi elaborati (AC-012); **50.000 e 100.000 punti importati e 100.001 rifiutato** (AC-014), con evento da 100.000 punti pubblicato sotto 8 MB.
 - Test sui log (REQ-034): con un provider di log in memoria, nessun messaggio contiene coordinate, valori di FC o contenuto del file.
 
 **Test cycle:**
 1. Scrivere i test di integrazione.
-2. Run `dotnet test tests/TriMetric.IntegrationTests`; atteso: fallimento dove manca qualcosa (eventuali correzioni vanno nei servizi coinvolti e annotate in `context.md`).
+2. Run `dotnet test tests/Metrica.IntegrationTests`; atteso: fallimento dove manca qualcosa (eventuali correzioni vanno nei servizi coinvolti e annotate in `context.md`).
 3. Correggere i difetti emersi.
 4. Rieseguire; atteso: verde.
 
 **Verification:**
-- Run: `dotnet test tests/TriMetric.IntegrationTests`
+- Run: `dotnet test tests/Metrica.IntegrationTests`
 - Expected: tutti gli scenari verdi con Docker avviato.
 
 **Done when:**
@@ -770,8 +770,8 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ## Final verification
 
 1. `docker compose -f deploy/compose.yaml up -d` (infrastruttura; dopo modifiche allo script di inizializzazione prima `down -v`).
-2. `dotnet build TriMetric.slnx -warnaserror`
-3. `dotnet test TriMetric.slnx` (inclusi `tests/TriMetric.IntegrationTests` e `tests/TriMetric.TestInfrastructure.Tests`)
+2. `dotnet build Metrica.slnx -warnaserror`
+3. `dotnet test Metrica.slnx` (inclusi `tests/Metrica.IntegrationTests` e `tests/Metrica.TestInfrastructure.Tests`)
 4. `pnpm -C src/web install --frozen-lockfile; pnpm -C src/web lint; pnpm -C src/web test; pnpm -C src/web test:e2e; pnpm -C src/web build`
 5. Con i servizi avviati: `pnpm -C src/web gen:api; git diff --exit-code src/web/src/shared/api`
 6. Prova manuale: carica un GPX e un FIT dal browser; verifica elenco, dettaglio, doppio caricamento, file non valido, viste a 375 px e a 1280 px.
@@ -792,6 +792,6 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ## Review record
 
 - 2026-11-12 — revisione indipendente (agente separato): **Problemi trovati**. Bloccanti accolti e corretti: sovrapposizione di subject tra `EVENTS` (`*.*.*`) e `DLQ` (DEC-005); permessi per `create_hypertable` (verificati con un esperimento, DEC-014, task T04); convenzione `snake_case`, tabella di storia e `IDesignTimeDbContextFactory` (DEC-003); dimensione dell'evento nel caso peggiore con arrotondamento e test (DEC-012, T02, T08, T15); fixture di test condivise con porta NATS fissa (DEC-013, T04); test mancanti per REQ-003, REQ-010, REQ-019, REQ-020; tier alzati a `strong` per T02, T08, T13, T14 (e T09–T12); T04 e T07 vecchi spezzati (ora T04–T07 e T09–T10); comandi PowerShell corretti; controllo automatico a 375 px. Osservazioni non bloccanti recepite: schema `Deny` per il 401, `DisableAntiforgery`, limite di Kestrel, casing di `Sport`, `ON CONFLICT DO NOTHING`, `AckProgress`, intervallo di polling del relay, basi URL del client web, `127.0.0.1`, versione di pnpm e di xunit.
-- 2026-11-12 — secondo passaggio (stesso revisore indipendente): un solo problema bloccante, **T09 non dipendeva da T08** (il progetto `TriMetric.Ingestion` nasce in T08); corretto con `Depends on: T03, T05, T06, T08`. Tutti i problemi del primo passaggio verificati come risolti nel contenuto dei task. Osservazioni recepite: riga REQ-020 della tabella (test di bind in T09 e T11), riferimento a T20 in DEC-004, collegamento del gateway ai servizi nei test di integrazione (Kestrel su porta effimera con destinazioni YARP sovrascritte), secondo utente con una seconda factory, isolamento dei test con un solo database e `TRUNCATE`, `COPY` sulla connessione e transazione del `DbContext`, script `test:e2e` e download dei browser di Playwright come azione umana, test dell'avanzamento in T17, divieto di `EnableSensitiveDataLogging`. Resta il suggerimento di dividere T08 in GPX e FIT se il contesto non basta (valutazione all'esecuzione). Versioni `EFCore.NamingConventions` 10.0.1 e `dotnet-ef` 10.0.x verificate su NuGet dal controller.
+- 2026-11-12 — secondo passaggio (stesso revisore indipendente): un solo problema bloccante, **T09 non dipendeva da T08** (il progetto `Metrica.Ingestion` nasce in T08); corretto con `Depends on: T03, T05, T06, T08`. Tutti i problemi del primo passaggio verificati come risolti nel contenuto dei task. Osservazioni recepite: riga REQ-020 della tabella (test di bind in T09 e T11), riferimento a T20 in DEC-004, collegamento del gateway ai servizi nei test di integrazione (Kestrel su porta effimera con destinazioni YARP sovrascritte), secondo utente con una seconda factory, isolamento dei test con un solo database e `TRUNCATE`, `COPY` sulla connessione e transazione del `DbContext`, script `test:e2e` e download dei browser di Playwright come azione umana, test dell'avanzamento in T17, divieto di `EnableSensitiveDataLogging`. Resta il suggerimento di dividere T08 in GPX e FIT se il contesto non basta (valutazione all'esecuzione). Versioni `EFCore.NamingConventions` 10.0.1 e `dotnet-ef` 10.0.x verificate su NuGet dal controller.
 - 2026-11-17 — su richiesta dell'utente, adattato il front-end (T16–T18, T20) e aggiunto T21: app web unica con due modalità di layout (telefono e desktop), predisposta per un guscio nativo Capacitor che si aggiunge dopo T20 (DEC-015, REQ-037, REQ-038). Il rilievo I1 di T14 (413 non leggibile per file grandi) è recepito in T17.
 - Stato finale: nessun problema bloccante aperto.

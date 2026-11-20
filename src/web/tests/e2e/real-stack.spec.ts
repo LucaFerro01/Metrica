@@ -12,9 +12,9 @@ import { italianLight, reachActivityLink } from './support';
 // (il GPX del test «accepted/duplicate», quello dell'AC-001 e quello con data del 2020).
 
 const SAMPLE = fileURLToPath(
-  new URL('../../../services/ingestion/tests/TriMetric.Ingestion.Tests/Samples/run.gpx', import.meta.url),
+  new URL('../../../services/ingestion/tests/Metrica.Ingestion.Tests/Samples/run.gpx', import.meta.url),
 );
-const SAMPLE_CREATOR = 'creator="TriMetric test sample"';
+const SAMPLE_CREATOR = 'creator="Metrica test sample"';
 
 test.skip(process.env.E2E_REAL !== '1', 'prova sullo stack reale: impostare E2E_REAL=1 con lo stack avviato');
 test.use({ storageState: italianLight });
@@ -36,7 +36,7 @@ async function activitiesTotal(request: APIRequestContext): Promise<number> {
 function uniqueGpx(year?: number): Buffer {
   let text = readFileSync(SAMPLE, 'utf8');
   expect(text).toContain(SAMPLE_CREATOR);
-  text = text.replace(SAMPLE_CREATOR, `creator="TriMetric e2e ${randomUUID()}"`);
+  text = text.replace(SAMPLE_CREATOR, `creator="Metrica e2e ${randomUUID()}"`);
   if (year !== undefined) {
     expect(text).toContain('2024-05-01');
     text = text.replaceAll('2024-05-01', `${year}-03-01`);

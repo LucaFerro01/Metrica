@@ -1,4 +1,4 @@
-# TriMetric *(nome provvisorio)*
+# Metrica
 
 Piattaforma web (desktop e mobile) che unisce gli allenamenti di **corsa, bici e nuoto** in un unico posto. Affianca le statistiche di Strava e aiuta ad analizzare, programmare e pianificare l'allenamento, sia per l'atleta amatore sia per quello evoluto o élite.
 
@@ -154,7 +154,7 @@ I punti ancora aperti (ad esempio micro-frontend sì/no, autenticazione, libreri
 ```text
 .
 ├── README.md
-├── TriMetric.slnx           Solution .NET (servizi, progetti condivisi, test)
+├── Metrica.slnx           Solution .NET (servizi, progetti condivisi, test)
 ├── .config/dotnet-tools.json  Strumenti .NET locali (dotnet-ef per le migrazioni)
 ├── global.json              SDK .NET fissato (11.0.100, target net10.0)
 ├── Directory.Build.props    Impostazioni comuni di build (warning come errori)
@@ -182,9 +182,9 @@ I punti ancora aperti (ad esempio micro-frontend sì/no, autenticazione, libreri
 │   │   └── Messaging/       Client NATS, outbox, inbox, consumatore con DLQ (solo infrastruttura)
 │   └── web/                 Frontend React (Vite, TypeScript); PWA prevista
 ├── tests/
-│   ├── TriMetric.TestInfrastructure/        Fixture Testcontainers (TimescaleDB, NATS)
-│   ├── TriMetric.TestInfrastructure.Tests/
-│   └── TriMetric.IntegrationTests/          Test end-to-end: i tre servizi veri con contenitori reali
+│   ├── Metrica.TestInfrastructure/        Fixture Testcontainers (TimescaleDB, NATS)
+│   ├── Metrica.TestInfrastructure.Tests/
+│   └── Metrica.IntegrationTests/          Test end-to-end: i tre servizi veri con contenitori reali
 ├── deploy/
 │   ├── compose.yaml         Infrastruttura locale (PostgreSQL/Timescale, NATS), porte solo su 127.0.0.1
 │   ├── .env.example         Variabili di esempio (copiare in .env)

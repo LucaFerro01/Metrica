@@ -16,16 +16,16 @@ describe('costanti dei limiti', () => {
   });
 });
 
-/** Radice del repository: si risale da `process.cwd()` fino alla cartella che contiene `TriMetric.slnx`. */
+/** Radice del repository: si risale da `process.cwd()` fino alla cartella che contiene `Metrica.slnx`. */
 function findRepoRoot(): string {
   let dir = process.cwd();
   for (let level = 0; level < 10; level += 1) {
-    if (existsSync(join(dir, 'TriMetric.slnx'))) return dir;
+    if (existsSync(join(dir, 'Metrica.slnx'))) return dir;
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
-  throw new Error(`Radice del repository (TriMetric.slnx) non trovata risalendo da ${process.cwd()}`);
+  throw new Error(`Radice del repository (Metrica.slnx) non trovata risalendo da ${process.cwd()}`);
 }
 
 describe('coerenza con il backend', () => {
@@ -35,7 +35,7 @@ describe('coerenza con il backend', () => {
     'services',
     'ingestion',
     'src',
-    'TriMetric.Ingestion',
+    'Metrica.Ingestion',
     'appsettings.json',
   );
 

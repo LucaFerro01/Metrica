@@ -1,6 +1,6 @@
 # Guida iniziale
 
-Come avviare TriMetric sul proprio computer, provarlo a mano, eseguire i test e risolvere i problemi più comuni. Il comando di avvio è uno solo per sistema operativo: gli script `scripts/dev.ps1` (Windows) e `scripts/dev.sh` (Linux, macOS, Git Bash) hanno le stesse opzioni e gli stessi messaggi.
+Come avviare Metrica sul proprio computer, provarlo a mano, eseguire i test e risolvere i problemi più comuni. Il comando di avvio è uno solo per sistema operativo: gli script `scripts/dev.ps1` (Windows) e `scripts/dev.sh` (Linux, macOS, Git Bash) hanno le stesse opzioni e gli stessi messaggi.
 
 > **Stato:** scheletro del sistema. Funzionano il caricamento di file GPX/FIT, l'elenco e il dettaglio delle attività. Mancano ancora accesso (login), analisi, pianificazione, Strava e Zepp: vedi [`README.md`](../README.md) e [`ARCHITECTURE/`](../ARCHITECTURE/README.md).
 
@@ -47,7 +47,7 @@ La **prima volta** servono alcuni minuti (immagini dei contenitori, ripristino d
 
 - **Ctrl+C** nella finestra dello script: ferma i servizi e il web (l'albero di processi completo). L'infrastruttura resta attiva, così il riavvio è rapido.
 - Da un altro terminale: `scripts\dev.ps1 -Stop` (o `bash scripts/dev.sh --stop`): fa lo stesso e lo script in primo piano termina.
-- Per fermare **anche** i contenitori: `scripts\dev.ps1 -StopInfra` (o `--stop-infra`). Esegue `compose down` **senza `-v`**: i volumi `trimetric_*` e quindi i dati di sviluppo restano.
+- Per fermare **anche** i contenitori: `scripts\dev.ps1 -StopInfra` (o `--stop-infra`). Esegue `compose down` **senza `-v`**: i volumi `metrica_*` e quindi i dati di sviluppo restano.
 - Ferma ciò che hai avviato con lo stesso script (`dev.ps1` o `dev.sh`): ciascuno riconosce solo i propri processi e, se trova quelli dell'altro, lo dice senza toccarli.
 - Se `-Stop` viene dato mentre lo script gira in una shell interattiva (non lanciato con `powershell -File`), non chiude quella shell: stampa «premi Ctrl+C nella finestra dello script».
 
@@ -61,7 +61,7 @@ Se i processi di un avvio precedente sono ancora attivi, lo script lo dice e non
 | `-NoWeb` | `--no-web` | Non avvia il web. |
 | `-Stop` | `--stop` | Ferma servizi e web avviati dallo script. |
 | `-StopInfra` | `--stop-infra` | Come sopra, poi `compose down` (senza `-v`). |
-| `-Runtime docker\|podman` | `--runtime docker\|podman` | Sceglie il runtime dei contenitori. Predefinito: il primo che funziona tra `docker` e `podman`; si può fissare anche con la variabile `TRIMETRIC_CONTAINER_RUNTIME`. |
+| `-Runtime docker\|podman` | `--runtime docker\|podman` | Sceglie il runtime dei contenitori. Predefinito: il primo che funziona tra `docker` e `podman`; si può fissare anche con la variabile `METRICA_CONTAINER_RUNTIME`. |
 | `-Help` | `--help` | Mostra l'aiuto. |
 
 Non esiste un'opzione per esporre il web sulla rete, di proposito (vedi *Identità di sviluppo*).
@@ -72,13 +72,13 @@ Equivalente a quello che fanno gli script, utile per capire o per eseguire un so
 
 ```bash
 docker compose -f deploy/compose.yaml up -d      # con Podman: podman compose -f deploy/compose.yaml up -d
-dotnet build src/services/ingestion/src/TriMetric.Ingestion/TriMetric.Ingestion.csproj
-dotnet build src/services/activities/src/TriMetric.Activities/TriMetric.Activities.csproj
-dotnet build src/services/gateway/src/TriMetric.Gateway/TriMetric.Gateway.csproj
+dotnet build src/services/ingestion/src/Metrica.Ingestion/Metrica.Ingestion.csproj
+dotnet build src/services/activities/src/Metrica.Activities/Metrica.Activities.csproj
+dotnet build src/services/gateway/src/Metrica.Gateway/Metrica.Gateway.csproj
 # un terminale per servizio, ambiente Development e identità di sviluppo (vedi sotto):
-dotnet run --no-build --project src/services/ingestion/src/TriMetric.Ingestion
-dotnet run --no-build --project src/services/activities/src/TriMetric.Activities
-dotnet run --no-build --project src/services/gateway/src/TriMetric.Gateway
+dotnet run --no-build --project src/services/ingestion/src/Metrica.Ingestion
+dotnet run --no-build --project src/services/activities/src/Metrica.Activities
+dotnet run --no-build --project src/services/gateway/src/Metrica.Gateway
 pnpm -C src/web dev
 ```
 
@@ -87,7 +87,7 @@ I profili `Properties/launchSettings.json` impostano già `ASPNETCORE_ENVIRONMEN
 ## Provare a mano (AC-001)
 
 1. Avvia tutto con lo script e apri **http://localhost:5173**.
-2. Vai alla pagina **Carica** e scegli un file `.gpx` o `.fit`. Campioni pronti in [`src/services/ingestion/tests/TriMetric.Ingestion.Tests/Samples/`](../src/services/ingestion/tests/TriMetric.Ingestion.Tests/Samples/): `run.gpx` (corsa) e `ride.fit` (bici con frequenza cardiaca e potenza). Gli altri due sono casi limite dei test: `gpx-no-elevation.gpx` (senza quota, accettato) e `gpx-no-time.gpx` (senza istanti: rifiutato come non valido).
+2. Vai alla pagina **Carica** e scegli un file `.gpx` o `.fit`. Campioni pronti in [`src/services/ingestion/tests/Metrica.Ingestion.Tests/Samples/`](../src/services/ingestion/tests/Metrica.Ingestion.Tests/Samples/): `run.gpx` (corsa) e `ride.fit` (bici con frequenza cardiaca e potenza). Gli altri due sono casi limite dei test: `gpx-no-elevation.gpx` (senza quota, accettato) e `gpx-no-time.gpx` (senza istanti: rifiutato come non valido).
 3. Dopo pochi secondi l'attività compare nell'**elenco** (riga «in elaborazione» prima, poi quella vera); aprila per vedere il **dettaglio** (distanza, durata, dislivello, frequenza cardiaca, potenza, giri).
 4. Caricando di nuovo lo stesso contenuto (anche con un altro nome) il sistema risponde «duplicato» e non crea una seconda attività: i campioni risultano duplicati se sono già stati caricati nel database di sviluppo (vedi *Ripulire i dati di prova*).
 
@@ -109,7 +109,7 @@ Il primo risponde `202` con `"status":"accepted"` (o `200` con `"duplicate"`); i
 | Gateway (YARP) | http://localhost:5080 | `localhost`. `/api/ingestion/{...}` → ingestion, `/api/activities/{...}` → activities. |
 | `ingestion` | http://127.0.0.1:5081 | solo `127.0.0.1` |
 | `activities` | http://127.0.0.1:5082 | solo `127.0.0.1` |
-| PostgreSQL | `127.0.0.1:5432` (database `trimetric`, uno schema e un ruolo per servizio) | solo `127.0.0.1` (compose) |
+| PostgreSQL | `127.0.0.1:5432` (database `metrica`, uno schema e un ruolo per servizio) | solo `127.0.0.1` (compose) |
 | NATS | `nats://127.0.0.1:4222`, monitoraggio http://127.0.0.1:8222 (`/healthz`) | solo `127.0.0.1` (compose) |
 
 Ogni servizio espone `/health/live` e `/health/ready`. In `Development` `ingestion` e `activities` pubblicano anche il documento OpenAPI (`/openapi/v1.json`).
@@ -127,11 +127,11 @@ Non esiste ancora il login. In ambiente `Development` ogni richiesta ai servizi 
 Dalla radice del repository.
 
 ```bash
-dotnet build TriMetric.slnx -warnaserror      # compilazione di tutta la solution, warning come errori
-dotnet test TriMetric.slnx                    # tutti i test .NET: richiede Docker o Podman avviato (Testcontainers)
+dotnet build Metrica.slnx -warnaserror      # compilazione di tutta la solution, warning come errori
+dotnet test Metrica.slnx                    # tutti i test .NET: richiede Docker o Podman avviato (Testcontainers)
 ```
 
-`dotnet test TriMetric.slnx` usa contenitori veri (TimescaleDB e NATS) tramite Testcontainers e porte effimere: non serve avviare lo stack con gli script e **non conviene farlo insieme**. Tempo indicativo: circa 4 minuti (misurato; i progetti di test girano in parallelo). I progetti senza contenitori si possono eseguire da soli, ad esempio `dotnet test src/services/gateway/tests/TriMetric.Gateway.Tests`.
+`dotnet test Metrica.slnx` usa contenitori veri (TimescaleDB e NATS) tramite Testcontainers e porte effimere: non serve avviare lo stack con gli script e **non conviene farlo insieme**. Tempo indicativo: circa 4 minuti (misurato; i progetti di test girano in parallelo). I progetti senza contenitori si possono eseguire da soli, ad esempio `dotnet test src/services/gateway/tests/Metrica.Gateway.Tests`.
 
 Web (`src/web`, [dettagli nel suo README](../src/web/README.md)):
 
@@ -179,7 +179,7 @@ poi rivedi il diff di `src/web/src/shared/api/*.d.ts`.
 
 - Le migrazioni si **applicano da sole all'avvio**, ma solo in `Development`. Alla prima migrazione di un database nuovo nel log compare un messaggio di livello `Error` di EF Core sulla lettura di `__EFMigrationsHistory` (la tabella non esiste ancora): è atteso e innocuo.
 - Per crearne una nuova (esempio per `activities`; per `ingestion` cambia il percorso): `dotnet tool restore` (una tantum) e poi
-  `dotnet ef migrations add <Nome> --project src/services/activities/src/TriMetric.Activities --output-dir Migrations`.
+  `dotnet ef migrations add <Nome> --project src/services/activities/src/Metrica.Activities --output-dir Migrations`.
   Le regole (compatibilità all'indietro, rilettura operazione per operazione) sono nel [README di `ingestion`](../src/services/ingestion/README.md).
 - Lo script [`deploy/postgres/init/01-schemas.sql`](../deploy/postgres/init/01-schemas.sql) (ruoli e schemi) gira **solo alla prima creazione del volume**. Se viene modificato servono `docker compose -f deploy/compose.yaml down -v` e un nuovo avvio: **`-v` cancella i volumi e quindi tutti i dati di sviluppo** (attività, stato di NATS). Gli script non lo eseguono mai.
 
@@ -189,7 +189,7 @@ poi rivedi il diff di `src/web/src/shared/api/*.d.ts`.
 - **File molto grandi:** il limite è 32 MiB. Oltre il limite il gateway chiude la connessione senza leggere il corpo e il browser **non riesce a leggere** il `413`; per questo il web controlla la dimensione **prima** di inviare e mostra un messaggio chiaro. Chiamando `ingestion` direttamente (porta 5081) il `413` si legge normalmente.
 - **Aggiornamento dell'elenco:** la riga «in elaborazione» e l'aggiornamento automatico valgono per i file caricati nella sessione corrente del browser; dopo un ricaricamento della pagina, o per un caricamento fatto altrove, ricarica l'elenco a mano.
 - **Porte dei contenitori:** gli script usano porte fisse (5432, 4222, 8222). Non cambiarle in `deploy/.env` se usi gli script: i servizi hanno gli indirizzi nei loro `appsettings` e i controlli di avvio guardano quelle porte.
-- **Più runtime, dati separati:** se Docker è installato ma fermo e Podman funziona, gli script passano a Podman. Podman ha volumi propri: i dati di sviluppo creati con Docker sembrano spariti (ci sono ancora, nei volumi di Docker). Per scegliere: `-Runtime docker|podman` o `TRIMETRIC_CONTAINER_RUNTIME`.
+- **Più runtime, dati separati:** se Docker è installato ma fermo e Podman funziona, gli script passano a Podman. Podman ha volumi propri: i dati di sviluppo creati con Docker sembrano spariti (ci sono ancora, nei volumi di Docker). Per scegliere: `-Runtime docker|podman` o `METRICA_CONTAINER_RUNTIME`.
 - **Git Bash:** `dev.sh` non può verificare che un PID registrato non sia stato riusato da un altro processo (lo fa su Linux, macOS e in `dev.ps1`). Con un checkout su Windows `dev.sh` deve restare con fine riga LF: lo garantisce `.gitattributes` (non rimuoverlo e non convertirlo in CRLF).
 - **Il gateway non ha CORS:** il web lo raggiunge solo attraverso il proxy di Vite (`/api`).
 
@@ -205,14 +205,14 @@ poi rivedi il diff di `src/web/src/shared/api/*.d.ts`.
 | `.NET SDK non compatibile con global.json` / manca il runtime 10 | Installa l'SDK indicato in `global.json` e il runtime ASP.NET Core 10 (https://dotnet.microsoft.com/download). |
 | PowerShell: `curl` non si comporta come atteso | In Windows PowerShell 5.1 `curl` è un alias di `Invoke-WebRequest`: usa `curl.exe`. |
 | `scripts\dev.ps1` si chiude subito o dice che `running scripts is disabled` | Avvialo come nella sezione *Avvio* (`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dev.ps1`). |
-| Percorsi che non si trovano (`src/web`, `deploy/compose.yaml`) | I comandi di questa guida sono scritti per la **radice del repository** (la cartella che contiene `TriMetric.slnx`); gli script invece funzionano da qualunque cartella. |
+| Percorsi che non si trovano (`src/web`, `deploy/compose.yaml`) | I comandi di questa guida sono scritti per la **radice del repository** (la cartella che contiene `Metrica.slnx`); gli script invece funzionano da qualunque cartella. |
 | Un servizio non risponde entro il tempo massimo | Guarda `.dev-logs/<servizio>.log`. Cause tipiche: PostgreSQL non raggiungibile, porta occupata, errore di compilazione (mostrato dallo script). |
 | Il caricamento resta «in elaborazione» | `activities` non riceve gli eventi: controlla `.dev-logs/activities.log` e che NATS risponda su http://127.0.0.1:8222/healthz. |
 | Il caricamento di un campione risponde «duplicato» | Quel contenuto è già nel database di sviluppo: vedi *Ripulire i dati di prova*. |
 
 ## Ripulire i dati di prova
 
-I dati di sviluppo stanno nei volumi `trimetric_postgres-data` e `trimetric_nats-data`. Non c'è (per ora) un comando per cancellare solo le attività: per ripartire da zero, **perdendo tutti i dati di sviluppo**:
+I dati di sviluppo stanno nei volumi `metrica_postgres-data` e `metrica_nats-data`. Non c'è (per ora) un comando per cancellare solo le attività: per ripartire da zero, **perdendo tutti i dati di sviluppo**:
 
 ```bash
 scripts/dev.sh --stop-infra                       # o scripts\dev.ps1 -StopInfra

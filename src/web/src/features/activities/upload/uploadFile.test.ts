@@ -90,7 +90,7 @@ describe('uploadFile: errori ProblemDetails', () => {
   it.each(codes)('%s (%i) è riconosciuto per type', async (code, httpStatus) => {
     const promise = uploadFile(file, { apiBase: API });
     FakeXhr.last().respond(httpStatus, {
-      type: `urn:trimetric:problem:${code}`,
+      type: `urn:metrica:problem:${code}`,
       title: 'Titolo del server',
       status: httpStatus,
       detail: 'Dettaglio in italiano del server',
@@ -100,11 +100,11 @@ describe('uploadFile: errori ProblemDetails', () => {
 
   it('un type sconosciuto diventa un errore HTTP per stato (nessun testo del server)', async () => {
     const promise = uploadFile(file, { apiBase: API });
-    FakeXhr.last().respond(422, { type: 'urn:trimetric:problem:nuovo-codice', detail: 'segreto' });
+    FakeXhr.last().respond(422, { type: 'urn:metrica:problem:nuovo-codice', detail: 'segreto' });
     await expect(promise).resolves.toEqual({ ok: false, reason: 'http', httpStatus: 422 });
   });
 
-  it('il ProblemDetails del gateway (type RFC, senza urn trimetric) è un errore HTTP 413', async () => {
+  it('il ProblemDetails del gateway (type RFC, senza urn metrica) è un errore HTTP 413', async () => {
     const promise = uploadFile(file, { apiBase: API });
     FakeXhr.last().respond(413, {
       type: 'https://tools.ietf.org/html/rfc9110#section-15.5.14',
@@ -131,7 +131,7 @@ describe('uploadFile: errori ProblemDetails', () => {
   it('il risultato non contiene mai il detail o il title del server', async () => {
     const promise = uploadFile(file, { apiBase: API });
     FakeXhr.last().respond(422, {
-      type: 'urn:trimetric:problem:invalid-activity-file',
+      type: 'urn:metrica:problem:invalid-activity-file',
       title: 'TITOLO-SEGRETO',
       detail: 'DETTAGLIO-SEGRETO',
     });

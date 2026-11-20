@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Avvio locale di TriMetric: infrastruttura, servizi .NET e web (Linux, macOS, Git Bash su Windows).
+# Avvio locale di Metrica: infrastruttura, servizi .NET e web (Linux, macOS, Git Bash su Windows).
 #
 # Stessa interfaccia e stessi messaggi di scripts/dev.ps1 (DEC-009):
 #   1. infrastruttura (PostgreSQL/TimescaleDB e NATS) con "compose -f deploy/compose.yaml up -d";
@@ -35,9 +35,9 @@ DEV_USER_ID="00000000-0000-4000-8000-000000000001"   # lo stesso di appsettings.
 
 SERVICE_NAMES=(ingestion activities gateway)
 SERVICE_CSPROJ=(
-  "src/services/ingestion/src/TriMetric.Ingestion/TriMetric.Ingestion.csproj"
-  "src/services/activities/src/TriMetric.Activities/TriMetric.Activities.csproj"
-  "src/services/gateway/src/TriMetric.Gateway/TriMetric.Gateway.csproj"
+  "src/services/ingestion/src/Metrica.Ingestion/Metrica.Ingestion.csproj"
+  "src/services/activities/src/Metrica.Activities/Metrica.Activities.csproj"
+  "src/services/gateway/src/Metrica.Gateway/Metrica.Gateway.csproj"
 )
 SERVICE_HEALTH=(
   "http://127.0.0.1:5081/health/live"
@@ -86,7 +86,7 @@ Opzioni:
   --no-web                   non avvia il web
   --stop                     ferma i servizi e il web avviati dallo script
   --stop-infra               come --stop e poi ferma i contenitori (compose down, senza -v: i dati restano)
-  --runtime docker|podman    sceglie il runtime dei contenitori (o variabile TRIMETRIC_CONTAINER_RUNTIME)
+  --runtime docker|podman    sceglie il runtime dei contenitori (o variabile METRICA_CONTAINER_RUNTIME)
   --help                     mostra questo aiuto
 
 Log in .dev-logs/ (un file per servizio). Guida completa: docs/getting-started.md
@@ -195,7 +195,7 @@ wait_http() {
 # Runtime dei contenitori
 # ---------------------------------------------------------------------------------------------
 resolve_container_runtime() {
-  local wanted="${RUNTIME_OPT:-${TRIMETRIC_CONTAINER_RUNTIME:-}}" c candidates installed=""
+  local wanted="${RUNTIME_OPT:-${METRICA_CONTAINER_RUNTIME:-}}" c candidates installed=""
   wanted="$(printf '%s' "$wanted" | tr '[:upper:]' '[:lower:]')"
   case "$wanted" in
     '' | docker | podman) ;;
@@ -336,7 +336,7 @@ stop_mode() {
     resolve_container_runtime
     info "Arresto dell'infrastruttura (compose down, senza -v: i volumi e i dati restano)..."
     compose down || die "compose down non riuscito (vedi sopra)."
-    ok "Infrastruttura fermata. I dati di sviluppo sono nei volumi trimetric_* e restano."
+    ok "Infrastruttura fermata. I dati di sviluppo sono nei volumi metrica_* e restano."
   else
     info "L'infrastruttura (PostgreSQL e NATS) resta attiva: usa --stop-infra per fermarla."
   fi

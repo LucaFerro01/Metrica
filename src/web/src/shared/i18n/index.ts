@@ -13,7 +13,7 @@ export type Language = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: Language = 'it';
 
 /** Chiave di storage della lingua scelta dall'utente. */
-export const LANGUAGE_STORAGE_KEY = 'trimetric.language';
+export const LANGUAGE_STORAGE_KEY = 'metrica.language';
 
 export const i18n = i18next.createInstance();
 

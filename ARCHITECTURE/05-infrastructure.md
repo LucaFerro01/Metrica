@@ -42,7 +42,7 @@ Tutto è raggiungibile solo dal computer locale: PostgreSQL e NATS sono pubblica
 | `gateway` | `http://localhost:5080` | `localhost` |
 | `ingestion` | `http://127.0.0.1:5081` | solo `127.0.0.1` |
 | `activities` | `http://127.0.0.1:5082` | solo `127.0.0.1` |
-| PostgreSQL | `127.0.0.1:5432` (database `trimetric`) | solo `127.0.0.1` (compose) |
+| PostgreSQL | `127.0.0.1:5432` (database `metrica`) | solo `127.0.0.1` (compose) |
 | NATS | `nats://127.0.0.1:4222`, monitoraggio `http://127.0.0.1:8222` | solo `127.0.0.1` (compose) |
 
 Le porte dei contenitori si possono cambiare con `deploy/.env` (si parte da `deploy/.env.example`), ma gli script e gli `appsettings` dei servizi usano quelle fisse: non cambiarle se si usano gli script.
@@ -80,7 +80,7 @@ Provato solo con Docker: Podman e gli script con Podman non sono stati provati (
 
 ## Integrazione continua
 
-**Stato attuale:** non esiste alcuna pipeline di integrazione continua. I test di integrazione con contenitori reali per database e bus (Testcontainers) esistono già e si eseguono in locale con `dotnet test TriMetric.slnx` (richiede Docker o Podman avviato; il tempo di circa 4 minuti è una misura del registro di sviluppo, non ricavata dal codice; vedi [`docs/getting-started.md`](../docs/getting-started.md)).
+**Stato attuale:** non esiste alcuna pipeline di integrazione continua. I test di integrazione con contenitori reali per database e bus (Testcontainers) esistono già e si eseguono in locale con `dotnet test Metrica.slnx` (richiede Docker o Podman avviato; il tempo di circa 4 minuti è una misura del registro di sviluppo, non ricavata dal codice; vedi [`docs/getting-started.md`](../docs/getting-started.md)).
 
 **[Ipotesi]** (pipeline futura): una pipeline per servizio, avviata solo quando cambiano i suoi file: compilazione, test, costruzione dell'immagine. Piattaforma da scegliere (es. GitHub Actions).
 

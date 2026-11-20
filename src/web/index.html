@@ -6,7 +6,7 @@
          si rispettano con env(safe-area-inset-*) (DEC-015, REQ-038). Lo zoom resta consentito. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <title>TriMetric</title>
+    <title>Metrica</title>
     <script>
       // Tema applicato PRIMA del primo disegno, per evitare il lampo di tema sbagliato (DEC-016).
       // È l'UNICA eccezione all'uso di localStorage fuori da src/shared/lib/storage.ts: lo script gira
@@ -15,7 +15,7 @@
       (function () {
         var preference = null;
         try {
-          preference = localStorage.getItem('trimetric.theme');
+          preference = localStorage.getItem('metrica.theme');
         } catch (e) {}
         try {
           var dark =

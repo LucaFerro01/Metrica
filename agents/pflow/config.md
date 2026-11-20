@@ -4,7 +4,7 @@
 - version: 1
 
 ## Project
-- name: TriMetric
+- name: Metrica
 
 ## Git
 - default_branch: master

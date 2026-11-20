@@ -41,7 +41,7 @@ export function clientErrorKey(error: FileValidationError): UploadMessageKey {
 
 /** Messaggio per un errore HTTP privo di codice riconoscibile: prima lo stato noto, poi la classe di stato. */
 function statusKey(httpStatus: number): UploadMessageKey {
-  if (httpStatus === 413) return PROBLEM_KEYS['file-too-large']; // anche il 413 del gateway (senza type di TriMetric)
+  if (httpStatus === 413) return PROBLEM_KEYS['file-too-large']; // anche il 413 del gateway (senza type di Metrica)
   if (httpStatus === 502) return 'activities.upload.errors.status.badGateway';
   if (httpStatus === 504) return 'activities.upload.errors.status.gatewayTimeout';
   if (httpStatus === 400) return 'activities.upload.errors.status.badRequest';

@@ -7,8 +7,8 @@ export const italianLight = {
     {
       origin: 'http://localhost:5173',
       localStorage: [
-        { name: 'trimetric.language', value: 'it' },
-        { name: 'trimetric.theme', value: 'light' },
+        { name: 'metrica.language', value: 'it' },
+        { name: 'metrica.theme', value: 'light' },
       ],
     },
   ],

@@ -19,17 +19,17 @@ La colonna *Stato* dice che cosa esiste nel repository (vocabolario *Implementat
 
 ## Progetti nel repository
 
-Ogni servizio è **un solo progetto** `TriMetric.<Servizio>` in `src/services/<servizio>/src/`, con i test in `src/services/<servizio>/tests/TriMetric.<Servizio>.Tests/` (DEC-004). Tutti hanno target `net10.0` e stanno nella solution `TriMetric.slnx` alla radice, con versioni dei pacchetti centralizzate in `Directory.Packages.props`. I servizi `identity`, `analytics` e `training-plan` hanno per ora solo la cartella con il README (nessun progetto .NET né migrazione); lo script di init del database ne crea già ruolo e schema e `EVENTS` ne riserva il prefisso dei subject.
+Ogni servizio è **un solo progetto** `Metrica.<Servizio>` in `src/services/<servizio>/src/`, con i test in `src/services/<servizio>/tests/Metrica.<Servizio>.Tests/` (DEC-004). Tutti hanno target `net10.0` e stanno nella solution `Metrica.slnx` alla radice, con versioni dei pacchetti centralizzate in `Directory.Packages.props`. I servizi `identity`, `analytics` e `training-plan` hanno per ora solo la cartella con il README (nessun progetto .NET né migrazione); lo script di init del database ne crea già ruolo e schema e `EVENTS` ne riserva il prefisso dei subject.
 
 Progetti **condivisi** (DEC-001, DEC-004), gli unici codici che più servizi possono usare:
 
 | Progetto | Cartella | Contenuto | Dipende da |
 |---|---|---|---|
-| `TriMetric.Contracts` | `src/shared/contracts/` | Solo definizioni: busta `EventEnvelope<T>`, `ActivityImported` (v1), `StreamColumns`, `Sport`, nomi di eventi, subject e stream (`EventNames`), `StreamLimits`, `ContractJson.Options` | niente |
-| `TriMetric.ServiceDefaults` | `src/shared/ServiceDefaults/` | `/health/live` e `/health/ready`, logging JSON con `correlationId`, OpenTelemetry (esportazione OTLP solo con un endpoint configurato), identità di sviluppo `AddDevelopmentIdentity` e `GetUserId` rigido | niente di interno |
-| `TriMetric.Messaging` | `src/shared/Messaging/` | Solo infrastruttura (nessuna logica di dominio): client e stream NATS, outbox con relay, inbox e consumatore con retry e DLQ (vedi [02-communication.md](02-communication.md)) | `contracts` (nessuna dipendenza da un servizio né da `ServiceDefaults`) |
+| `Metrica.Contracts` | `src/shared/contracts/` | Solo definizioni: busta `EventEnvelope<T>`, `ActivityImported` (v1), `StreamColumns`, `Sport`, nomi di eventi, subject e stream (`EventNames`), `StreamLimits`, `ContractJson.Options` | niente |
+| `Metrica.ServiceDefaults` | `src/shared/ServiceDefaults/` | `/health/live` e `/health/ready`, logging JSON con `correlationId`, OpenTelemetry (esportazione OTLP solo con un endpoint configurato), identità di sviluppo `AddDevelopmentIdentity` e `GetUserId` rigido | niente di interno |
+| `Metrica.Messaging` | `src/shared/Messaging/` | Solo infrastruttura (nessuna logica di dominio): client e stream NATS, outbox con relay, inbox e consumatore con retry e DLQ (vedi [02-communication.md](02-communication.md)) | `contracts` (nessuna dipendenza da un servizio né da `ServiceDefaults`) |
 
-`gateway` dipende solo da `ServiceDefaults` (e da `Yarp.ReverseProxy`: nessun database, nessun NATS); `ingestion` e `activities` da tutti e tre. Test condivisi in `tests/`: `TriMetric.TestInfrastructure` (fixture Testcontainers per TimescaleDB e NATS, DEC-013), i suoi test e `TriMetric.IntegrationTests` (i tre servizi veri in processo con contenitori reali).
+`gateway` dipende solo da `ServiceDefaults` (e da `Yarp.ReverseProxy`: nessun database, nessun NATS); `ingestion` e `activities` da tutti e tre. Test condivisi in `tests/`: `Metrica.TestInfrastructure` (fixture Testcontainers per TimescaleDB e NATS, DEC-013), i suoi test e `Metrica.IntegrationTests` (i tre servizi veri in processo con contenitori reali).
 
 ## gateway
 

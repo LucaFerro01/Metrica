@@ -8,15 +8,15 @@
 # Le password sono VALORI DI SOLO SVILUPPO: non usarle in produzione.
 # Per cambiarle crea deploy/.env (non versionato), vedi deploy/.env.example.
 
-name: trimetric
+name: metrica
 
 services:
   postgres:
     image: docker.io/timescale/timescaledb:latest-pg16
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-trimetric}
+      POSTGRES_USER: ${POSTGRES_USER:-metrica}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_only_change_me}
-      POSTGRES_DB: ${POSTGRES_DB:-trimetric}
+      POSTGRES_DB: ${POSTGRES_DB:-metrica}
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -25,7 +25,7 @@ services:
       # Con Podman su Linux/SELinux può servire il suffisso ":Z" sul bind mount.
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-trimetric} -d ${POSTGRES_DB:-trimetric}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-metrica} -d ${POSTGRES_DB:-metrica}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-    Avvio locale di TriMetric: infrastruttura, servizi .NET e web (Windows PowerShell 5.1 o superiore).
+    Avvio locale di Metrica: infrastruttura, servizi .NET e web (Windows PowerShell 5.1 o superiore).
 
 .DESCRIPTION
     Avvia con un solo comando (DEC-009):
@@ -29,7 +29,7 @@
 
 .PARAMETER Runtime
     Runtime dei contenitori: docker o podman. Predefinito: il primo disponibile e funzionante tra docker
-    e podman; si può fissare anche con la variabile TRIMETRIC_CONTAINER_RUNTIME.
+    e podman; si può fissare anche con la variabile METRICA_CONTAINER_RUNTIME.
 
 .PARAMETER Help
     Mostra questo aiuto.
@@ -59,9 +59,9 @@ $WebDir      = Join-Path $RepoRoot 'src\web'
 $DevUserId   = '00000000-0000-4000-8000-000000000001'   # lo stesso di appsettings.Development.json
 
 $Services = @(
-    @{ Nome = 'ingestion';  Csproj = 'src\services\ingestion\src\TriMetric.Ingestion\TriMetric.Ingestion.csproj';   Health = 'http://127.0.0.1:5081/health/live' },
-    @{ Nome = 'activities'; Csproj = 'src\services\activities\src\TriMetric.Activities\TriMetric.Activities.csproj'; Health = 'http://127.0.0.1:5082/health/live' },
-    @{ Nome = 'gateway';    Csproj = 'src\services\gateway\src\TriMetric.Gateway\TriMetric.Gateway.csproj';          Health = 'http://localhost:5080/health/live' }
+    @{ Nome = 'ingestion';  Csproj = 'src\services\ingestion\src\Metrica.Ingestion\Metrica.Ingestion.csproj';   Health = 'http://127.0.0.1:5081/health/live' },
+    @{ Nome = 'activities'; Csproj = 'src\services\activities\src\Metrica.Activities\Metrica.Activities.csproj'; Health = 'http://127.0.0.1:5082/health/live' },
+    @{ Nome = 'gateway';    Csproj = 'src\services\gateway\src\Metrica.Gateway\Metrica.Gateway.csproj';          Health = 'http://localhost:5080/health/live' }
 )
 $WebUrl      = 'http://localhost:5173'
 $NatsHealth  = 'http://127.0.0.1:8222/healthz'
@@ -90,7 +90,7 @@ Opzioni:
   -NoWeb                   non avvia il web
   -Stop                    ferma i servizi e il web avviati dallo script
   -StopInfra               come -Stop e poi ferma i contenitori (compose down, senza -v: i dati restano)
-  -Runtime docker|podman   sceglie il runtime dei contenitori (o variabile TRIMETRIC_CONTAINER_RUNTIME)
+  -Runtime docker|podman   sceglie il runtime dei contenitori (o variabile METRICA_CONTAINER_RUNTIME)
   -Help                    mostra questo aiuto
 
 Log in .dev-logs\ (un file per servizio). Guida completa: docs\getting-started.md
@@ -250,7 +250,7 @@ $script:ContainerRuntime = $null
 
 function Resolve-ContainerRuntime {
     $wanted = $Runtime
-    if (-not $wanted) { $wanted = $env:TRIMETRIC_CONTAINER_RUNTIME }
+    if (-not $wanted) { $wanted = $env:METRICA_CONTAINER_RUNTIME }
     if ($wanted) { $wanted = $wanted.Trim().ToLowerInvariant() }
     if ($wanted -and $wanted -notin @('docker', 'podman')) {
         Stop-Script "Runtime dei contenitori non valido ('$wanted'): usa docker o podman."
@@ -408,7 +408,7 @@ function Invoke-StopMode {
         Write-Info 'Arresto dell''infrastruttura (compose down, senza -v: i volumi e i dati restano)...'
         $rc = (Invoke-Compose 'down').Code
         if ($rc -ne 0) { Stop-Script 'compose down non riuscito (vedi sopra).' }
-        Write-Ok 'Infrastruttura fermata. I dati di sviluppo sono nei volumi trimetric_* e restano.'
+        Write-Ok 'Infrastruttura fermata. I dati di sviluppo sono nei volumi metrica_* e restano.'
     } else {
         Write-Info 'L''infrastruttura (PostgreSQL e NATS) resta attiva: usa -StopInfra per fermarla.'
     }

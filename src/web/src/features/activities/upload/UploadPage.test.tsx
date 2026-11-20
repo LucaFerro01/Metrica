@@ -439,7 +439,7 @@ describe('pagina Carica: errori del server', () => {
     await chooseAndSend();
     act(() =>
       FakeXhr.last().respond(status, {
-        type: `urn:trimetric:problem:${code}`,
+        type: `urn:metrica:problem:${code}`,
         title: 'TITOLO-GREZZO',
         status,
         detail: 'DETTAGLIO-GREZZO del server in italiano',
@@ -453,7 +453,7 @@ describe('pagina Carica: errori del server', () => {
     expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
   });
 
-  it('il 413 del gateway (ProblemDetails senza type di TriMetric) usa il messaggio di file troppo grande', async () => {
+  it('il 413 del gateway (ProblemDetails senza type di Metrica) usa il messaggio di file troppo grande', async () => {
     await mount();
     await chooseAndSend();
     act(() =>
@@ -487,13 +487,13 @@ describe('pagina Carica: errori del server', () => {
   it('un type sconosciuto dà il messaggio generico della classe di stato (4xx e 5xx)', async () => {
     await mount();
     await chooseAndSend();
-    act(() => FakeXhr.last().respond(422, { type: 'urn:trimetric:problem:nuovo', detail: 'DETTAGLIO-GREZZO' }));
+    act(() => FakeXhr.last().respond(422, { type: 'urn:metrica:problem:nuovo', detail: 'DETTAGLIO-GREZZO' }));
     await screen.findByRole('alert');
     expect(alertText()).toBe('Il servizio ha rifiutato il caricamento.');
     expect(document.body.textContent).not.toContain('GREZZO');
 
     await user.click(screen.getByRole('button', { name: 'Invia file' }));
-    act(() => FakeXhr.last().respond(500, { type: 'urn:trimetric:problem:nuovo' }));
+    act(() => FakeXhr.last().respond(500, { type: 'urn:metrica:problem:nuovo' }));
     await screen.findByText('Il servizio ha avuto un problema. Riprova più tardi.');
   });
 
@@ -521,7 +521,7 @@ describe('pagina Carica: errori del server', () => {
   it('il nome del file non compare mai nei messaggi di errore', async () => {
     await mount();
     await chooseAndSend(gpx('nome-riservato.gpx'));
-    act(() => FakeXhr.last().respond(422, { type: 'urn:trimetric:problem:invalid-activity-file' }));
+    act(() => FakeXhr.last().respond(422, { type: 'urn:metrica:problem:invalid-activity-file' }));
     await screen.findByRole('alert');
     expect(alertText()).not.toContain('nome-riservato');
   });
@@ -589,7 +589,7 @@ describe('pagina Carica: ripartire con un altro file', () => {
   it('dopo un errore scegliere un altro file toglie il messaggio di errore', async () => {
     await mount();
     await chooseAndSend();
-    act(() => FakeXhr.last().respond(422, { type: 'urn:trimetric:problem:invalid-activity-file' }));
+    act(() => FakeXhr.last().respond(422, { type: 'urn:metrica:problem:invalid-activity-file' }));
     await screen.findByRole('alert');
 
     await choose(gpx('altro.gpx'));

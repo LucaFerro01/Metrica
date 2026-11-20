@@ -68,7 +68,7 @@ test.describe('layout', () => {
       route.fulfill({
         status: 422,
         contentType: 'application/problem+json',
-        body: JSON.stringify({ type: 'urn:trimetric:problem:too-many-points', status: 422 }),
+        body: JSON.stringify({ type: 'urn:metrica:problem:too-many-points', status: 422 }),
       }),
     );
     await page.goto('/upload');
@@ -121,7 +121,7 @@ test.describe('flussi', () => {
         status: 422,
         contentType: 'application/problem+json',
         body: JSON.stringify({
-          type: 'urn:trimetric:problem:invalid-activity-file',
+          type: 'urn:metrica:problem:invalid-activity-file',
           title: 'TITOLO-DEL-SERVER',
           status: 422,
           detail: 'DETTAGLIO-DEL-SERVER',

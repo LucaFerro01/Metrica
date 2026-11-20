@@ -8,7 +8,7 @@ Archivio canonico delle attività e delle loro serie temporali.
 - **Consuma:** `ActivityImported` (**implementato**, consumatore durevole `activities-activity-imported` sul subject `ingestion.activity.imported`); `UserDeleted` (previsto, non implementato).
 - **Origine nel PoC:** `activities.routes.ts`, tabelle attività in `schema.ts`.
 - **Stato (scheletro walking-skeleton-import):** implementati l'importazione di `ActivityImported` (consumatore con inbox e scrittura di attività, giri e stream) e le API di lettura (elenco con filtri, dettaglio con stream ridotto e filtro `externalId`, DEC-017). Non ancora implementati: la pubblicazione di `ActivityStored`, `ActivityUpdated` e `ActivityDeleted`, il consumo di `UserDeleted` e le correzioni manuali.
-- **Host:** `dotnet run --project src/services/activities/src/TriMetric.Activities` (il profilo di avvio imposta `ASPNETCORE_ENVIRONMENT=Development`); Kestrel solo su `http://127.0.0.1:5082`, raggiungibile dal web attraverso il gateway (`/api/activities`). Migrazioni e `/openapi/v1.json` solo in `Development`; `/health/ready` controlla solo il database. Fuori da `Development` ogni richiesta protetta risponde 401.
+- **Host:** `dotnet run --project src/services/activities/src/Metrica.Activities` (il profilo di avvio imposta `ASPNETCORE_ENVIRONMENT=Development`); Kestrel solo su `http://127.0.0.1:5082`, raggiungibile dal web attraverso il gateway (`/api/activities`). Migrazioni e `/openapi/v1.json` solo in `Development`; `/health/ready` controlla solo il database. Fuori da `Development` ogni richiesta protetta risponde 401.
 
 Vedi [`03-data.md`](../../../ARCHITECTURE/03-data.md).
 
@@ -23,7 +23,7 @@ Tutti gli endpoint richiedono l'autenticazione; l'utente viene solo dal principa
 - `GET /activities` — elenco paginato dell'utente, dalla più recente (`startTime` decrescente, poi `id`). Risposta `{ items, page, pageSize, total }`.
 - `GET /activities/{id}?maxPoints=` — dettaglio con giri e stream ridotto.
 
-Parametri di query di `GET /activities`, tutti opzionali e validati a mano (valore non valido, vuoto o ripetuto = 400 `ProblemDetails` `urn:trimetric:problem:invalid-query`, mai una correzione silenziosa):
+Parametri di query di `GET /activities`, tutti opzionali e validati a mano (valore non valido, vuoto o ripetuto = 400 `ProblemDetails` `urn:metrica:problem:invalid-query`, mai una correzione silenziosa):
 
 | Parametro | Regola | Predefinito |
 | --- | --- | --- |
@@ -38,7 +38,7 @@ Il documento OpenAPI (`/openapi/v1.json`, solo in Development) descrive `externa
 
 ## Dettaglio e stream ridotto
 
-`GET /activities/{id}?maxPoints=` restituisce i campi dell'elenco più `movingSeconds`, `summary` (frequenza cardiaca media e massima, potenza e cadenza medie, ciascuna nulla se assente), `laps` e `stream` (formato a colonne, come in `StreamColumns` dei contratti). Un id inesistente o di un altro utente risponde 404 (`urn:trimetric:problem:activity-not-found`).
+`GET /activities/{id}?maxPoints=` restituisce i campi dell'elenco più `movingSeconds`, `summary` (frequenza cardiaca media e massima, potenza e cadenza medie, ciascuna nulla se assente), `laps` e `stream` (formato a colonne, come in `StreamColumns` dei contratti). Un id inesistente o di un altro utente risponde 404 (`urn:metrica:problem:activity-not-found`).
 
 - `maxPoints`: intero da 2 (il minimo, perché primo e ultimo punto stiano sempre entrambi) a `Activities:MaxStreamPoints` (predefinito 5000, configurabile da 1000 a 100.000, validato all'avvio); predefinito 1000 (REQ-018, AC-011).
 - La riduzione avviene **nel database** (`ActivityStreamReader`): `row_number()` e indici a passo costante, con sempre il primo e l'ultimo punto; dal database escono al massimo `maxPoints` righe. Non è LTTB.
@@ -48,4 +48,4 @@ Il documento OpenAPI (`/openapi/v1.json`, solo in Development) descrive `externa
 
 ## Test
 
-`dotnet test src/services/activities/tests/TriMetric.Activities.Tests`: richiede Docker o Podman avviato (TimescaleDB e NATS veri con Testcontainers, tramite `tests/TriMetric.TestInfrastructure`). Si possono filtrare per categoria (`--filter Category=Persistence`, `Consumer` o `Api`). I test non usano `TRUNCATE`: ogni test usa identificativi nuovi nel database condiviso del contenitore di prova (non in quello di sviluppo). Negli override di configurazione degli host di test usare `UseSetting` e non `ConfigureAppConfiguration` (arriva dopo la costruzione dell'host e viene ignorato, ad esempio per `Dev:UserId` e per `Consumers:*`). Gli scenari che coinvolgono anche `ingestion` e il gateway sono in `tests/TriMetric.IntegrationTests`.
+`dotnet test src/services/activities/tests/Metrica.Activities.Tests`: richiede Docker o Podman avviato (TimescaleDB e NATS veri con Testcontainers, tramite `tests/Metrica.TestInfrastructure`). Si possono filtrare per categoria (`--filter Category=Persistence`, `Consumer` o `Api`). I test non usano `TRUNCATE`: ogni test usa identificativi nuovi nel database condiviso del contenitore di prova (non in quello di sviluppo). Negli override di configurazione degli host di test usare `UseSetting` e non `ConfigureAppConfiguration` (arriva dopo la costruzione dell'host e viene ignorato, ad esempio per `Dev:UserId` e per `Consumers:*`). Gli scenari che coinvolgono anche `ingestion` e il gateway sono in `tests/Metrica.IntegrationTests`.

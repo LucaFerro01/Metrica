@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Metrica test sample" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <type>running</type>
+    <trkseg>
+      <trkpt lat="45.0" lon="7.5"><ele>100</ele><time>2024-05-01T06:00:00Z</time></trkpt>
+      <trkpt lat="45.0001" lon="7.5"><ele>101</ele></trkpt>
+      <trkpt lat="45.0002" lon="7.5"><ele>102</ele><time>2024-05-01T06:00:02Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
