@@ -21,7 +21,10 @@ public sealed class IsolationTests
         var project = XDocument.Load(Path.Combine(ServicePaths.ProjectDirectory, "Metrica.Gateway.csproj"));
 
         var packages = project.Descendants("PackageReference").Select(e => (string)e.Attribute("Include")!).ToList();
-        var projects = project.Descendants("ProjectReference").Select(e => Path.GetFileNameWithoutExtension((string)e.Attribute("Include")!)).ToList();
+        // Nel .csproj i percorsi usano '\': su Linux Path non lo tratta come separatore, quindi si normalizza prima.
+        var projects = project.Descendants("ProjectReference")
+            .Select(e => Path.GetFileNameWithoutExtension(((string)e.Attribute("Include")!).Replace('\\', '/')))
+            .ToList();
 
         Assert.Equal(["Yarp.ReverseProxy"], packages);
         Assert.Equal(["Metrica.ServiceDefaults"], projects);
