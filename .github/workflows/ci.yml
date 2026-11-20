@@ -38,7 +38,8 @@ jobs:
         run: dotnet build Metrica.slnx -warnaserror
 
       - name: Test
-        run: dotnet test Metrica.slnx --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults
+        # Un file .trx per progetto di test (senza LogFileName fisso, altrimenti si sovrascrivono a vicenda).
+        run: dotnet test Metrica.slnx --no-build --logger trx --results-directory TestResults
 
       - name: Salva i risultati dei test
         if: failure()
