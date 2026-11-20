@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { i18n } from '@/shared/i18n';
 import { storage } from '@/shared/lib/storage';
 import { THEME_STORAGE_KEY } from '@/shared/lib/theme';
+import { activityId, jsonResponse, listBody, makeDetail, stubActivitiesApi } from '@/test/fakeActivitiesApi';
 import { installFakeMatchMedia } from '@/test/matchMedia';
 import { resetPersistedPreferences } from '@/test/resetPreferences';
 import { renderApp } from '@/test/renderApp';
@@ -17,6 +18,8 @@ async function mount(path = '/') {
 }
 
 beforeEach(() => {
+  // Le pagine Attività leggono l'API: qui un elenco vuoto (il loro comportamento è provato nei test delle feature).
+  stubActivitiesApi(() => jsonResponse(listBody([])));
   resetPersistedPreferences();
   document.documentElement.classList.remove('dark');
   installFakeMatchMedia(false);
@@ -40,10 +43,24 @@ describe('instradamento', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Carica un file' })).toBeInTheDocument();
   });
 
-  it('/activities/$activityId mostra il dettaglio con l\'identificativo', async () => {
+  it("/activities/$activityId mostra il dettaglio dell'attività", async () => {
+    stubActivitiesApi(() => jsonResponse(makeDetail(5, { sport: 'swim' })));
+    await mount(`/activities/${activityId(5)}`);
+    expect(await screen.findByRole('heading', { level: 1, name: 'Nuoto' })).toBeInTheDocument();
+  });
+
+  it('/activities/$activityId con un id che non è un UUID mostra «Attività non trovata»', async () => {
     await mount('/activities/abc-123');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Dettaglio attività' })).toBeInTheDocument();
-    expect(screen.getByText(/abc-123/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Attività non trovata' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: "Torna all'elenco" })).toHaveAttribute('href', '/activities');
+  });
+
+  it('i parametri di ricerca non validi di /activities si ignorano (mai una pagina di errore)', async () => {
+    const { router } = await mount('/activities?sport=triathlon&page=-1');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Attività' })).toBeInTheDocument();
+    expect(router.state.matches.at(-1)?.search).toEqual({});
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Pagina non trovata' })).not.toBeInTheDocument();
   });
 
   it('un percorso sconosciuto mostra "pagina non trovata" con il link per tornare alle attività', async () => {

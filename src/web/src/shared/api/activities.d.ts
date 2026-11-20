@@ -135,6 +135,7 @@ export interface operations {
         parameters: {
             query?: {
                 sport?: components["schemas"]["Sport"];
+                externalId?: string;
                 page?: number;
                 pageSize?: number;
             };

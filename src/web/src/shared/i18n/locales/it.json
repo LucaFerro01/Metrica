@@ -32,13 +32,82 @@
     "back": "Vai alle attività"
   },
   "activities": {
+    "sport": {
+      "all": "Tutti",
+      "run": "Corsa",
+      "ride": "Bici",
+      "swim": "Nuoto",
+      "other": "Altro"
+    },
+    "errors": {
+      "network": "Impossibile raggiungere il server. Controlla la connessione e riprova.",
+      "server": "Il servizio non risponde in questo momento. Riprova tra poco.",
+      "badRequest": "La richiesta non è valida. Riprova.",
+      "unexpected": "Risposta inattesa dal server. Riprova.",
+      "retry": "Riprova"
+    },
     "list": {
       "title": "Attività",
-      "placeholder": "L'elenco delle attività arriverà nel prossimo passo."
+      "listLabel": "Elenco delle attività",
+      "filterLabel": "Filtra per sport",
+      "columns": {
+        "date": "Data e ora",
+        "sport": "Sport",
+        "distance": "Distanza",
+        "duration": "Durata",
+        "elevation": "Dislivello"
+      },
+      "loading": "Caricamento delle attività…",
+      "empty": "Nessuna attività: carica un file per iniziare.",
+      "emptyAction": "Carica un file",
+      "emptyFiltered": "Nessuna attività per questo sport.",
+      "pageMissing": "Questa pagina non esiste.",
+      "lastPage": "Vai all'ultima pagina",
+      "pagination": {
+        "label": "Paginazione",
+        "previous": "Precedente",
+        "next": "Successiva",
+        "pageOf": "Pagina {{page}} di {{pages}}"
+      },
+      "pending": {
+        "title": "In elaborazione…",
+        "description": "File caricato il {{time}}: in attesa che l'attività compaia.",
+        "timedOut": "Ancora in elaborazione.",
+        "timedOutHint": "Caricato il {{time}}. Può servire più tempo del previsto.",
+        "retry": "Riprova",
+        "checking": "Controllo in corso…",
+        "announceImported": "Attività importata.",
+        "announceTimedOut": "Un caricamento è ancora in elaborazione. Puoi riprovare."
+      }
     },
     "detail": {
       "title": "Dettaglio attività",
-      "placeholder": "Attività {{id}}: il dettaglio arriverà nel prossimo passo."
+      "back": "Torna all'elenco",
+      "loading": "Caricamento dell'attività…",
+      "notFound": {
+        "title": "Attività non trovata",
+        "description": "L'attività non esiste o non è disponibile."
+      },
+      "summaryLabel": "Riepilogo",
+      "summary": {
+        "distance": "Distanza",
+        "duration": "Durata",
+        "movingTime": "Durata in movimento",
+        "elevation": "Dislivello",
+        "avgHeartRate": "FC media",
+        "avgPower": "Potenza media",
+        "avgCadence": "Cadenza media"
+      },
+      "laps": {
+        "title": "Giri",
+        "lap": "Giro {{number}}",
+        "columns": {
+          "lap": "Giro",
+          "start": "Inizio",
+          "duration": "Durata",
+          "distance": "Distanza"
+        }
+      }
     },
     "upload": {
       "title": "Carica un file",

@@ -5,7 +5,7 @@ import {
   redirect,
   type RouterHistory,
 } from '@tanstack/react-router';
-import { ActivityDetailPage, ActivityListPage, UploadPage } from '@/features/activities';
+import { ActivityDetailPage, ActivityListPage, parseActivitiesSearch, UploadPage } from '@/features/activities';
 import { AppShell } from './layout/AppShell';
 import { NotFoundPage } from './NotFoundPage';
 
@@ -27,15 +27,23 @@ const indexRoute = createRoute({
 const activitiesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'activities',
-  component: ActivityListPage,
+  // `?sport=` (run|ride|swim|other) e `?page=` (intero >= 2): un valore non valido si scarta, vale il predefinito.
+  validateSearch: parseActivitiesSearch,
+  component: function ActivitiesRoute() {
+    const { sport, page } = activitiesRoute.useSearch();
+    return <ActivityListPage sport={sport} page={page} />;
+  },
 });
 
 const activityDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: 'activities/$activityId',
+  // Filtro e pagina dell'elenco di provenienza, per il link «Torna all'elenco».
+  validateSearch: parseActivitiesSearch,
   component: function ActivityDetailRoute() {
     const { activityId } = activityDetailRoute.useParams();
-    return <ActivityDetailPage activityId={activityId} />;
+    const backSearch = activityDetailRoute.useSearch();
+    return <ActivityDetailPage activityId={activityId} backSearch={backSearch} />;
   },
 });
 

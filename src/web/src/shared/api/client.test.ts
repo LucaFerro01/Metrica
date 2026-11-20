@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createActivitiesClient, createIngestionClient } from './client';
+import { createActivitiesClient, createIngestionClient, resolveApiBase } from './client';
 
 // In jsdom (Node) `Request` richiede un URL assoluto: i test usano una base assoluta finta.
 // Nel browser la base relativa `/api` si risolve rispetto all'origine della pagina.
@@ -54,5 +54,28 @@ describe('client ingestion', () => {
     });
     expect(lastUrl(fetchMock)).toBe('http://gateway.test/api/ingestion/uploads');
     expect(fetchMock.mock.calls.at(-1)?.[0].method).toBe('POST');
+  });
+});
+
+describe('resolveApiBase', () => {
+  it("rende assoluta una base relativa rispetto all'origine della pagina", () => {
+    expect(resolveApiBase('/api', 'http://localhost:5173')).toBe('http://localhost:5173/api');
+    expect(resolveApiBase('', 'http://localhost:5173')).toBe('http://localhost:5173');
+  });
+
+  it("lascia com'è una base già assoluta o un'origine non utilizzabile", () => {
+    expect(resolveApiBase('https://gateway.test/api', 'http://localhost:5173')).toBe('https://gateway.test/api');
+    expect(resolveApiBase('/api', 'null')).toBe('/api');
+    expect(resolveApiBase('/api', '')).toBe('/api');
+  });
+});
+
+describe('fetch del client activities', () => {
+  it('senza fetch esplicito usa il fetch globale corrente (sostituibile dopo la creazione del client)', async () => {
+    const client = createActivitiesClient('/api');
+    const fetchMock = fakeFetch({ items: [], total: 0 });
+    vi.stubGlobal('fetch', fetchMock);
+    await client.GET('/activities');
+    expect(new URL(lastUrl(fetchMock)).pathname).toBe('/api/activities');
   });
 });

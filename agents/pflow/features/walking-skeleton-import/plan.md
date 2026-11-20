@@ -672,7 +672,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T18: Web — elenco e dettaglio attività
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-027, REQ-028, REQ-030, REQ-037, REQ-040; AC-001, AC-010; DEC-008, DEC-015, DEC-017
 **Depends on:** T16, T17
 **Tier:** standard — pagine di lettura con polling.

@@ -32,13 +32,82 @@
     "back": "Go to activities"
   },
   "activities": {
+    "sport": {
+      "all": "All",
+      "run": "Run",
+      "ride": "Ride",
+      "swim": "Swim",
+      "other": "Other"
+    },
+    "errors": {
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "server": "The service is not responding right now. Try again shortly.",
+      "badRequest": "The request is not valid. Try again.",
+      "unexpected": "Unexpected response from the server. Try again.",
+      "retry": "Try again"
+    },
     "list": {
       "title": "Activities",
-      "placeholder": "The activity list is coming in the next step."
+      "listLabel": "Activity list",
+      "filterLabel": "Filter by sport",
+      "columns": {
+        "date": "Date and time",
+        "sport": "Sport",
+        "distance": "Distance",
+        "duration": "Duration",
+        "elevation": "Elevation gain"
+      },
+      "loading": "Loading activities…",
+      "empty": "No activities yet: upload a file to get started.",
+      "emptyAction": "Upload a file",
+      "emptyFiltered": "No activities for this sport.",
+      "pageMissing": "This page does not exist.",
+      "lastPage": "Go to the last page",
+      "pagination": {
+        "label": "Pagination",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {{page}} of {{pages}}"
+      },
+      "pending": {
+        "title": "Processing…",
+        "description": "File uploaded on {{time}}: waiting for the activity to appear.",
+        "timedOut": "Still processing.",
+        "timedOutHint": "Uploaded on {{time}}. It may take longer than expected.",
+        "retry": "Try again",
+        "checking": "Checking…",
+        "announceImported": "Activity imported.",
+        "announceTimedOut": "An upload is still being processed. You can try again."
+      }
     },
     "detail": {
       "title": "Activity details",
-      "placeholder": "Activity {{id}}: the details are coming in the next step."
+      "back": "Back to the list",
+      "loading": "Loading the activity…",
+      "notFound": {
+        "title": "Activity not found",
+        "description": "The activity does not exist or is not available."
+      },
+      "summaryLabel": "Summary",
+      "summary": {
+        "distance": "Distance",
+        "duration": "Duration",
+        "movingTime": "Moving time",
+        "elevation": "Elevation gain",
+        "avgHeartRate": "Avg heart rate",
+        "avgPower": "Avg power",
+        "avgCadence": "Avg cadence"
+      },
+      "laps": {
+        "title": "Laps",
+        "lap": "Lap {{number}}",
+        "columns": {
+          "lap": "Lap",
+          "start": "Start",
+          "duration": "Duration",
+          "distance": "Distance"
+        }
+      }
     },
     "upload": {
       "title": "Upload a file",
