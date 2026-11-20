@@ -701,7 +701,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T19: Script di avvio locale e documentazione
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-005, REQ-033; AC-013; DEC-009
 **Depends on:** T15, T18
 **Tier:** standard — script multi-piattaforma e documento di avvio.

@@ -182,18 +182,29 @@ Regole di base:
 
 ---
 
-## Avvio (previsto)
+## Avvio
 
-Non ancora disponibile. A regime:
+Un solo comando avvia l'infrastruttura locale (PostgreSQL con TimescaleDB e NATS, da `deploy/compose.yaml`), i servizi `ingestion`, `activities` e `gateway` e il web:
+
+```powershell
+# Windows
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\dev.ps1
+```
 
 ```bash
-# infrastruttura locale (con Docker o Podman)
+# Linux, macOS, Git Bash
+bash scripts/dev.sh
+```
+
+Poi apri **http://localhost:5173**, carica un file GPX o FIT e guarda l'elenco e il dettaglio delle attività. Ctrl+C ferma servizi e web; `scripts\dev.ps1 -Stop` (o `bash scripts/dev.sh --stop`) li ferma da un altro terminale; con `-StopInfra` (`--stop-infra`) si fermano anche i contenitori, senza cancellare i dati. Per avviare solo l'infrastruttura (con Docker o Podman):
+
+```bash
 docker compose -f deploy/compose.yaml up -d
 # oppure
 podman compose -f deploy/compose.yaml up -d
 ```
 
-Prerequisiti previsti: .NET SDK (ultima LTS), Node.js LTS con pnpm, Docker o Podman.
+Prerequisiti: .NET SDK 11.0.100 (vedi `global.json`) con il runtime ASP.NET Core 10, Node.js 22 o più recente, pnpm 12, Docker o Podman. Opzioni degli script, porte e indirizzi, test, rigenerazione dei tipi dell'API e problemi comuni: [`docs/getting-started.md`](docs/getting-started.md).
 
 ---
 

@@ -1,0 +1,6 @@
+# Fine riga fissa per i file che girano in ambienti dove CRLF li romperebbe (script di shell, init di PostgreSQL,
+# configurazione di NATS montati nei contenitori Linux) o che richiedono CRLF (script PowerShell).
+*.sh text eol=lf
+scripts/dev.ps1 text eol=crlf
+deploy/**/*.sql text eol=lf
+deploy/**/*.conf text eol=lf
