@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: il contenuto arriva sotto tacche e barre di sistema; i margini sicuri
+         si rispettano con env(safe-area-inset-*) (DEC-015, REQ-038). Lo zoom resta consentito. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Metrica</title>
+    <script>
+      // Tema applicato PRIMA del primo disegno, per evitare il lampo di tema sbagliato (DEC-016).
+      // È l'UNICA eccezione all'uso di localStorage fuori da src/shared/lib/storage.ts: lo script gira
+      // prima del bundle e non può importarlo. Legge la stessa chiave di THEME_STORAGE_KEY
+      // (src/shared/lib/theme.ts): un test ne verifica la coincidenza. Ogni accesso è protetto da try/catch.
+      (function () {
+        var preference = null;
+        try {
+          preference = localStorage.getItem('metrica.theme');
+        } catch (e) {}
+        try {
+          var dark =
+            preference === 'dark' ||
+            (preference !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.classList.toggle('dark', dark);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

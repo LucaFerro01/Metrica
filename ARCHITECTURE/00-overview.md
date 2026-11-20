@@ -31,6 +31,8 @@ In ordine di importanza:
 
 ## Vista d'insieme
 
+Il disegno è quello **completo**. Lo scheletro del sistema realizza solo il percorso dell'import di file GPX/FIT: web (senza PWA) → `gateway` → `ingestion` → NATS → `activities` → PostgreSQL/TimescaleDB, con identità di sviluppo fissa. `identity`, `analytics`, `training-plan`, Strava e Zepp non esistono ancora (stato per servizio in [01-services.md](01-services.md)).
+
 ```mermaid
 flowchart TB
     subgraph Client
@@ -89,6 +91,8 @@ sequenceDiagram
 ```
 
 Il webhook risponde subito; il resto è asincrono. Strava richiede una risposta rapida e riprova in caso di errore, quindi l'elaborazione deve essere idempotente.
+
+Questo flusso è **previsto**. Realizzato nello scheletro è il tratto da `ingestion` in poi con un file GPX/FIT al posto di Strava: `POST /uploads` risponde subito (202), l'evento `ActivityImported` passa dall'outbox a NATS e `activities` lo salva in modo idempotente; `ActivityStored`, `analytics` e `training-plan` non esistono ancora.
 
 ## Principi guida
 

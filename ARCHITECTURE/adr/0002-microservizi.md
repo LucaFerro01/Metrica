@@ -37,3 +37,11 @@ Si adotta un'architettura a **microservizi** con questi servizi iniziali: `gatew
 
 - **Monolite modulare** (stessi moduli, un solo processo): più semplice e quasi sempre la scelta migliore per un singolo sviluppatore. Scartato per l'obiettivo di apprendimento; resta come **piano di ripiego** se il costo diventa insostenibile: i moduli sono già separati per dati ed eventi, quindi l'unione sarebbe praticabile.
 - **Pochi servizi grandi** (es. solo `api` + `worker`, come il PoC): meno apprendimento sui temi distribuiti.
+
+## Esito dello scheletro del sistema (2026-11-20)
+
+Sezione aggiornata con l'esito dello scheletro, come previsto dal piano T20 (verifica finale e aggiornamento dell'architettura). Nessun cambio di stato.
+
+- Lo scheletro realizza tre dei sei servizi (`gateway`, `ingestion`, `activities`), che dialogano solo con API HTTP (attraverso il gateway) ed eventi NATS; nessun servizio legge lo schema di un altro (ruoli di database separati, AC-008).
+- La regola «nessun codice condiviso oltre ai contratti degli eventi» è stata estesa da DEC-001 (decisione confermata dall'utente nella pianificazione dello scheletro): i progetti condivisi sono tre, `contracts` (solo definizioni), `ServiceDefaults` e `Messaging` (solo infrastruttura, senza logica di dominio e senza dipendenze da un servizio).
+- Per l'ambiente di sviluppo il costo è stato ridotto con compose e con gli script `scripts/dev.ps1` e `scripts/dev.sh`; **Aspire non è stato adottato** (DEC-009) ed è rimasto un'ipotesi.

@@ -18,6 +18,7 @@ dist/
 .vite/
 coverage/
 playwright-report/
+test-results/
 
 # Editor e sistema
 .idea/
@@ -28,3 +29,4 @@ Thumbs.db
 
 # Output locali di strumenti
 graphify-out/
+.dev-logs/

@@ -1,0 +1,69 @@
+@import 'tailwindcss';
+
+/* Variante `dark` guidata dalla classe `.dark` su <html> (la mette `shared/lib/theme` e, prima del
+   primo disegno, lo script inline di index.html), non da prefers-color-scheme: così l'interruttore
+   Sistema/Chiaro/Scuro comanda. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------------------------
+   Tema: UNICO punto in cui stanno i colori (DEC-016). Variabili semantiche, valori per chiaro e
+   scuro. Stile sobrio: grigi neutri, un solo accento blu, molto spazio bianco, caratteri di sistema.
+   Per cambiare l'aspetto si modificano solo questi valori, non le pagine.
+   --------------------------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --background: #f7f7f8;
+  --surface: #ffffff;
+  --foreground: #18181b;
+  --muted: #62626b;
+  --border: #e4e4e7;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  --danger: #dc2626;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0b0b0d;
+  --surface: #151518;
+  --foreground: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: #27272a;
+  --accent: #60a5fa;
+  --accent-foreground: #0b0b0d;
+  --danger: #f87171;
+}
+
+/* Espone le variabili come colori di Tailwind: bg-background, bg-surface, text-foreground, text-muted,
+   border-border, bg-accent, text-accent-foreground, text-danger. `inline` fa leggere la variabile a
+   runtime, così il cambio di classe `.dark` si propaga senza ricompilare. */
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+}
+
+/* Solo caratteri di sistema: nessun font scaricato. */
+@theme {
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+  }
+}

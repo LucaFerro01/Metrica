@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Npgsql" />
+    <PackageReference Include="NATS.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Metrica.Activities\Metrica.Activities.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\contracts\Metrica.Contracts\Metrica.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\..\shared\Messaging\Metrica.Messaging\Metrica.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\..\..\tests\Metrica.TestInfrastructure\Metrica.TestInfrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

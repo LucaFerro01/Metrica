@@ -8,6 +8,6 @@ Calcolo di metriche, carico, zone, stime fisiologiche e riepiloghi.
 - **Consuma:** `ActivityStored`, `ActivityUpdated`, `ActivityDeleted`, `UserDeleted`.
 - **Origine nel PoC:** `metrics.service.ts`, `metrics.routes.ts`, pagina `Analytics.tsx`.
 - **Principio:** le formule sono funzioni pure, testate con dati di riferimento.
-- **Stato:** da implementare.
+- **Stato:** previsto, non implementato: nessun progetto .NET, nessuna migrazione, nessun evento definito in `contracts`. Esistono solo questo README e due predisposizioni comuni: `deploy/postgres/init/01-schemas.sql` crea già il ruolo `analytics_svc` e lo schema `analytics`, e `EventNames.EventsStreamSubjects` riserva il prefisso `analytics.>` nello stream `EVENTS`.
 
 Vedi [`08-analytics.md`](../../../ARCHITECTURE/08-analytics.md).

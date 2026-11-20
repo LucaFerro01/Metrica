@@ -30,3 +30,9 @@ Serve un frontend leggero e reattivo, utilizzabile su desktop e telefono come PW
 - **Vue 3 (+ Nuxt):** valida alternativa, con buone librerie (PrimeVue, Vuetify); ecosistema inferiore a React.
 - **SolidJS:** reattività finissima, ecosistema ancora più piccolo.
 - **Blazor:** un solo linguaggio (C#), ma peso iniziale e resa su mobile meno adatti a una PWA leggera.
+
+## Esito dello scheletro del sistema (2026-11-20)
+
+Sezione aggiornata con l'esito dello scheletro, come previsto dal piano T20 (verifica finale e aggiornamento dell'architettura). Nessun cambio di stato.
+
+`src/web` realizza la parte della decisione che serve allo scheletro: React 19, TypeScript, Vite, TanStack Router e Query, Tailwind CSS 4 e client API generato dall'OpenAPI dei servizi (`openapi-typescript` e `openapi-fetch`). Scostamenti dal testo sopra: i componenti sono **scritti a mano** con Tailwind (DEC-016) e shadcn/ui è rimandato a quando arrivano calendario ed editor; TypeScript è alla 5.9 (e non all'ultima maggiore) perché `typescript-eslint` 8.73 e `openapi-typescript` 7.13 dichiarano di richiedere versioni precedenti (registro di T16); **non ci sono** PWA, service worker, grafici (Recharts) né mappe (MapLibre), ancora previsti. Dettagli in [`04-frontend.md`](../04-frontend.md).

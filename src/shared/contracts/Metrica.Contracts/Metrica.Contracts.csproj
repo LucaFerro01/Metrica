@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Contratti condivisi tra servizi: solo definizioni, nessuna dipendenza oltre al framework. -->
+
+</Project>

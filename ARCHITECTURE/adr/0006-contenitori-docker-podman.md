@@ -36,3 +36,9 @@ Il progetto usa solo funzioni **standard e portabili**: immagini OCI costruite d
 - **Solo Docker:** più semplice, ma vincolante.
 - **Solo Podman con Quadlet/`pod`:** potente, ma meno portabile.
 - **Kubernetes in locale (kind, minikube):** troppo pesante per lo sviluppo quotidiano; rimane possibile per la produzione.
+
+## Esito dello scheletro del sistema (2026-11-20)
+
+Sezione aggiornata con l'esito dello scheletro, come previsto dal piano T20 (verifica finale e aggiornamento dell'architettura). Nessun cambio di stato.
+
+`deploy/compose.yaml` (PostgreSQL con TimescaleDB e NATS, immagini con nome completo) usa solo funzioni standard e gli script di sviluppo scelgono `docker` o `podman` (`-Runtime`/`--runtime` o `METRICA_CONTAINER_RUNTIME`). **Provato soltanto con Docker**: `podman compose` e gli script con Podman non sono stati provati (la regola «si prova con entrambi i runtime» resta da soddisfare). Non esistono ancora Dockerfile né contenitori dei servizi applicativi. Aspire non è stato adottato.

@@ -1,0 +1,157 @@
+{
+  "app": {
+    "name": "Metrica"
+  },
+  "nav": {
+    "bottomLabel": "Bottom navigation",
+    "sideLabel": "Sidebar",
+    "activities": "Activities",
+    "upload": "Upload"
+  },
+  "theme": {
+    "label": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "label": "Language",
+    "it": "Italiano",
+    "en": "English",
+    "short": {
+      "it": "IT",
+      "en": "EN"
+    }
+  },
+  "common": {
+    "unavailable": "not available"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The requested address does not exist.",
+    "back": "Go to activities"
+  },
+  "activities": {
+    "sport": {
+      "all": "All",
+      "run": "Run",
+      "ride": "Ride",
+      "swim": "Swim",
+      "other": "Other"
+    },
+    "errors": {
+      "network": "Cannot reach the server. Check your connection and try again.",
+      "server": "The service is not responding right now. Try again shortly.",
+      "badRequest": "The request is not valid. Try again.",
+      "unexpected": "Unexpected response from the server. Try again.",
+      "retry": "Try again"
+    },
+    "list": {
+      "title": "Activities",
+      "listLabel": "Activity list",
+      "filterLabel": "Filter by sport",
+      "columns": {
+        "date": "Date and time",
+        "sport": "Sport",
+        "distance": "Distance",
+        "duration": "Duration",
+        "elevation": "Elevation gain"
+      },
+      "loading": "Loading activities…",
+      "empty": "No activities yet: upload a file to get started.",
+      "emptyAction": "Upload a file",
+      "emptyFiltered": "No activities for this sport.",
+      "pageMissing": "This page does not exist.",
+      "lastPage": "Go to the last page",
+      "pagination": {
+        "label": "Pagination",
+        "previous": "Previous",
+        "next": "Next",
+        "pageOf": "Page {{page}} of {{pages}}"
+      },
+      "pending": {
+        "title": "Processing…",
+        "description": "File uploaded on {{time}}: waiting for the activity to appear.",
+        "timedOut": "Still processing.",
+        "timedOutHint": "Uploaded on {{time}}. It may take longer than expected.",
+        "retry": "Try again",
+        "checking": "Checking…",
+        "announceImported": "Activity imported.",
+        "announceTimedOut": "An upload is still being processed. You can try again."
+      }
+    },
+    "detail": {
+      "title": "Activity details",
+      "back": "Back to the list",
+      "loading": "Loading the activity…",
+      "notFound": {
+        "title": "Activity not found",
+        "description": "The activity does not exist or is not available."
+      },
+      "summaryLabel": "Summary",
+      "summary": {
+        "distance": "Distance",
+        "duration": "Duration",
+        "movingTime": "Moving time",
+        "elevation": "Elevation gain",
+        "avgHeartRate": "Avg heart rate",
+        "avgPower": "Avg power",
+        "avgCadence": "Avg cadence"
+      },
+      "laps": {
+        "title": "Laps",
+        "lap": "Lap {{number}}",
+        "columns": {
+          "lap": "Lap",
+          "start": "Start",
+          "duration": "Duration",
+          "distance": "Distance"
+        }
+      }
+    },
+    "upload": {
+      "title": "Upload a file",
+      "description": "Choose a recorded activity in .gpx or .fit format.",
+      "dropzoneLabel": "File selection area",
+      "choose": "Choose a file",
+      "dropHint": "Or drag the file here.",
+      "formats": "Accepted formats: .gpx and .fit, up to {{max}}.",
+      "noFile": "No file chosen",
+      "submit": "Send file",
+      "cancel": "Cancel",
+      "progressLabel": "Upload progress",
+      "progressValue": "{{percent}} %",
+      "progressSending": "Sending…",
+      "progressProcessing": "Processing on the server…",
+      "accepted": "File uploaded: it is being processed.",
+      "duplicate": "This file had already been uploaded.",
+      "goToActivities": "Go to activities",
+      "errors": {
+        "problem": {
+          "invalidFileField": "The request does not contain exactly one valid file. Choose a file and try again.",
+          "malformedRequest": "The service did not recognize the upload request. Try again.",
+          "emptyFile": "The file is empty.",
+          "unsupportedFileType": "Unsupported file type: only .gpx and .fit files are accepted.",
+          "fileTooLarge": "The file is too large: the limit is {{max}}.",
+          "invalidActivityFile": "The file does not contain a valid GPX or FIT activity.",
+          "tooManyPoints": "The file contains too many points to be imported.",
+          "parseTimeout": "Analyzing the file took too long.",
+          "eventTooLarge": "The activity is too large to be imported.",
+          "internalError": "Internal service error during the upload. Try again later."
+        },
+        "status": {
+          "badRequest": "Invalid request.",
+          "badGateway": "The service cannot be reached. Try again later.",
+          "gatewayTimeout": "Timed out: the service did not respond. Try again.",
+          "clientError": "The service rejected the upload.",
+          "serverError": "The service ran into a problem. Try again later.",
+          "unexpected": "Unexpected response from the service."
+        },
+        "network": {
+          "interrupted": "Connection interrupted. Check your network and try again.",
+          "interruptedLarge": "Connection interrupted during the upload. With large files, try again on a more stable network; the limit is {{max}}."
+        }
+      }
+    }
+  }
+}

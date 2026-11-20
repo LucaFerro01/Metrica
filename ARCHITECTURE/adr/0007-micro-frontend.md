@@ -34,3 +34,9 @@ Si parte con **un'unica applicazione React organizzata per funzione** (`features
 - **Module Federation (Vite/Webpack):** carica moduli remoti a runtime; flessibile, ma complesso da tenere allineato.
 - **Web component per area:** neutrali rispetto al framework, ma richiedono disciplina su stato e routing.
 - **Applicazioni separate su percorsi diversi dietro il gateway:** la forma più semplice, ma con ricaricamento completo tra aree e stile duplicato.
+
+## Esito dello scheletro del sistema (2026-11-20)
+
+Sezione aggiornata con l'esito dello scheletro, come previsto dal piano T20 (verifica finale e aggiornamento dell'architettura). Nessun cambio di stato.
+
+La struttura per funzione e la regola di lint esistono in `src/web` (`pnpm lint` impone che una feature non importi da un'altra né da `app`, che `shared` non importi da `features` o `app` e che da fuori si importi solo dall'`index.ts` della feature; un test prova le regole con la vera API di ESLint). Oggi c'è una sola feature, `activities`, quindi la scissione non è stata messa alla prova: la decisione resta *Proposta* e va rivalutata con altre aree.

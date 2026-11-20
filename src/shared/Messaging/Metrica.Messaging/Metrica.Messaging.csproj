@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Infrastruttura di messaggistica condivisa (DEC-001): client NATS, stream, outbox. Nessuna logica di dominio.
+       Nessuna dipendenza da servizi ne da ServiceDefaults. -->
+
+  <ItemGroup>
+    <!-- Hosting e logging (BackgroundService, ILogger) dal framework condiviso, come ServiceDefaults. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NATS.Net" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Formula del backoff e classificazione degli errori del relay sono verificate direttamente dai test. -->
+    <InternalsVisibleTo Include="Metrica.Messaging.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\contracts\Metrica.Contracts\Metrica.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
