@@ -5,6 +5,7 @@ import {
   formatDistance,
   formatDuration,
   formatElevation,
+  formatFileSize,
   formatMetric,
 } from './format';
 
@@ -190,5 +191,39 @@ describe('formatDateTime e formatDate', () => {
     expect(formatDateTime('2026-11-19T10:00:00+01:00', 'en')).toBe(
       formatDateTime('2026-11-19T09:00:00Z', 'en'),
     );
+  });
+});
+
+describe('formatFileSize', () => {
+  it.each([null, undefined])('restituisce null per %s', (value) => {
+    expect(formatFileSize(value, 'it')).toBeNull();
+  });
+
+  it('restituisce null per valori non validi (non finiti o negativi)', () => {
+    expect(formatFileSize(Number.NaN, 'it')).toBeNull();
+    expect(formatFileSize(Number.POSITIVE_INFINITY, 'it')).toBeNull();
+    expect(formatFileSize(-1, 'it')).toBeNull();
+  });
+
+  it('sotto 1 KiB mostra i byte interi', () => {
+    expect(formatFileSize(0, 'it')).toBe(`0${NBSP}B`);
+    expect(formatFileSize(1023, 'it')).toBe(`1023${NBSP}B`);
+  });
+
+  it('usa KiB e MiB con al massimo un decimale, nella lingua corrente', () => {
+    expect(formatFileSize(1024, 'it')).toBe(`1${NBSP}KiB`);
+    expect(formatFileSize(1536, 'it')).toBe(`1,5${NBSP}KiB`);
+    expect(formatFileSize(1536, 'en')).toBe(`1.5${NBSP}KiB`);
+    expect(formatFileSize(1024 * 1024, 'it')).toBe(`1${NBSP}MiB`);
+    expect(formatFileSize(32 * 1024 * 1024, 'it')).toBe(`32${NBSP}MiB`);
+    expect(formatFileSize(5.25 * 1024 * 1024, 'it')).toBe(`5,3${NBSP}MiB`);
+  });
+
+  it("un valore che arrotonda al taglio successivo passa all'unità superiore (mai '1024 KiB')", () => {
+    expect(formatFileSize(1024 * 1024 - 1, 'it')).toBe(`1${NBSP}MiB`);
+  });
+
+  it('arriva a GiB', () => {
+    expect(formatFileSize(3 * 1024 ** 3, 'it')).toBe(`3${NBSP}GiB`);
   });
 });

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react';
+import type { ComponentProps } from 'react';
 import { cn } from './cn';
 
 type Variant = 'primary' | 'secondary' | 'ghost';
@@ -9,7 +9,8 @@ const variants: Record<Variant, string> = {
   ghost: 'text-foreground hover:bg-surface',
 };
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+// `ComponentProps<'button'>` include `ref` (React 19: è una prop normale), così il focus si può gestire dall'esterno.
+interface ButtonProps extends ComponentProps<'button'> {
   variant?: Variant;
 }
 

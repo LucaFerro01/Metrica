@@ -42,7 +42,47 @@
     },
     "upload": {
       "title": "Upload a file",
-      "placeholder": "Uploading .gpx and .fit files is coming in the next step."
+      "description": "Choose a recorded activity in .gpx or .fit format.",
+      "dropzoneLabel": "File selection area",
+      "choose": "Choose a file",
+      "dropHint": "Or drag the file here.",
+      "formats": "Accepted formats: .gpx and .fit, up to {{max}}.",
+      "noFile": "No file chosen",
+      "submit": "Send file",
+      "cancel": "Cancel",
+      "progressLabel": "Upload progress",
+      "progressValue": "{{percent}} %",
+      "progressSending": "Sending…",
+      "progressProcessing": "Processing on the server…",
+      "accepted": "File uploaded: it is being processed.",
+      "duplicate": "This file had already been uploaded.",
+      "goToActivities": "Go to activities",
+      "errors": {
+        "problem": {
+          "invalidFileField": "The request does not contain exactly one valid file. Choose a file and try again.",
+          "malformedRequest": "The service did not recognize the upload request. Try again.",
+          "emptyFile": "The file is empty.",
+          "unsupportedFileType": "Unsupported file type: only .gpx and .fit files are accepted.",
+          "fileTooLarge": "The file is too large: the limit is {{max}}.",
+          "invalidActivityFile": "The file does not contain a valid GPX or FIT activity.",
+          "tooManyPoints": "The file contains too many points to be imported.",
+          "parseTimeout": "Analyzing the file took too long.",
+          "eventTooLarge": "The activity is too large to be imported.",
+          "internalError": "Internal service error during the upload. Try again later."
+        },
+        "status": {
+          "badRequest": "Invalid request.",
+          "badGateway": "The service cannot be reached. Try again later.",
+          "gatewayTimeout": "Timed out: the service did not respond. Try again.",
+          "clientError": "The service rejected the upload.",
+          "serverError": "The service ran into a problem. Try again later.",
+          "unexpected": "Unexpected response from the service."
+        },
+        "network": {
+          "interrupted": "Connection interrupted. Check your network and try again.",
+          "interruptedLarge": "Connection interrupted during the upload. With large files, try again on a more stable network; the limit is {{max}}."
+        }
+      }
     }
   }
 }

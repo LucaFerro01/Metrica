@@ -80,3 +80,23 @@ export function formatDate(value: DateInput | null | undefined, locale: string):
   if (!date) return null;
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(date);
 }
+
+const FILE_SIZE_UNITS = ['B', 'KiB', 'MiB', 'GiB'] as const;
+
+/**
+ * Dimensione di un file con unità binarie ("512 B", "1,5 KiB", "32 MiB"): byte interi sotto 1 KiB, poi
+ * al massimo un decimale. Un valore che arrotonda al taglio successivo passa all'unità superiore
+ * (mai "1024 KiB").
+ */
+export function formatFileSize(bytes: number | null | undefined, locale: string): string | null {
+  if (!isFiniteNumber(bytes) || bytes < 0) return null;
+  if (bytes < 1024) return `${integer(bytes, locale)}${NBSP}B`;
+  const oneDecimal = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+  let value = bytes;
+  let unit = 0;
+  while (unit < FILE_SIZE_UNITS.length - 1 && (value >= 1024 || Math.round(value * 10) / 10 >= 1024)) {
+    value /= 1024;
+    unit += 1;
+  }
+  return `${oneDecimal.format(value)}${NBSP}${FILE_SIZE_UNITS[unit]}`;
+}

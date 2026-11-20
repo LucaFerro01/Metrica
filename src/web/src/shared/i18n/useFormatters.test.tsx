@@ -30,6 +30,7 @@ describe('useFormatters', () => {
     expect(result.current.distance(null)).toBeNull();
     expect(result.current.duration(undefined)).toBeNull();
     expect(result.current.elevation(null)).toBeNull();
+    expect(result.current.fileSize(undefined)).toBeNull();
     expect(result.current.metric(undefined, 'bpm')).toBeNull();
     expect(result.current.dateTime(null)).toBeNull();
   });

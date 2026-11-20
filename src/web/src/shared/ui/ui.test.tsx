@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { createRef } from 'react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { Button } from './Button';
@@ -11,6 +12,12 @@ describe('Button', () => {
     const button = screen.getByRole('button', { name: 'Vai' });
     expect(button).toHaveAttribute('type', 'button');
     expect(button).toHaveClass('min-h-11', 'min-w-11');
+  });
+
+  it('inoltra il ref al pulsante (per gestire il focus)', () => {
+    const ref = createRef<HTMLButtonElement>();
+    render(<Button ref={ref}>Vai</Button>);
+    expect(ref.current).toBe(screen.getByRole('button', { name: 'Vai' }));
   });
 
   it('chiama onClick e rispetta disabled', async () => {

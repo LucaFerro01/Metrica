@@ -1,10 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Test end-to-end di fumo. NON vengono eseguiti da `pnpm test` (Vitest li esclude).
+// Test end-to-end. NON vengono eseguiti da `pnpm test` (Vitest li esclude).
 // Prerequisito umano, una tantum: scaricare il browser (centinaia di MB):
 //   pnpm -C src/web exec playwright install chromium
-// Poi: `pnpm -C src/web test:e2e`. Le chiamate a /api/* sono intercettate con `page.route`,
-// quindi non servono né gateway né servizi.
+// Poi: `pnpm -C src/web test:e2e`. Le chiamate a /api/* sono intercettate con `page.route` (smoke e upload),
+// quindi non servono né gateway né servizi. Unica eccezione: `real-stack.spec.ts` non intercetta nulla, si
+// salta salvo `E2E_REAL=1` e richiede lo stack avviato (infrastruttura, ingestion, activities, gateway).
 
 const BASE_URL = 'http://localhost:5173';
 

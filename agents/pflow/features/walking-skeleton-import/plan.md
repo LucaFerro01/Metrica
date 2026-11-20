@@ -643,7 +643,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T17: Web — pagina di upload
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-026, REQ-030, REQ-037; AC-001, AC-004
 **Depends on:** T16
 **Tier:** standard — pagina con stato e gestione errori.

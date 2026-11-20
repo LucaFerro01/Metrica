@@ -42,7 +42,47 @@
     },
     "upload": {
       "title": "Carica un file",
-      "placeholder": "Il caricamento dei file .gpx e .fit arriverà nel prossimo passo."
+      "description": "Scegli un'attività registrata in formato .gpx o .fit.",
+      "dropzoneLabel": "Area di selezione del file",
+      "choose": "Scegli un file",
+      "dropHint": "Oppure trascina qui il file.",
+      "formats": "Formati ammessi: .gpx e .fit, fino a {{max}}.",
+      "noFile": "Nessun file scelto",
+      "submit": "Invia file",
+      "cancel": "Annulla",
+      "progressLabel": "Avanzamento del caricamento",
+      "progressValue": "{{percent}} %",
+      "progressSending": "Invio in corso…",
+      "progressProcessing": "Elaborazione sul server…",
+      "accepted": "File caricato: è in elaborazione.",
+      "duplicate": "Questo file era già stato caricato.",
+      "goToActivities": "Vai alle attività",
+      "errors": {
+        "problem": {
+          "invalidFileField": "La richiesta non contiene un solo file valido. Scegli un file e riprova.",
+          "malformedRequest": "Il servizio non ha riconosciuto la richiesta di caricamento. Riprova.",
+          "emptyFile": "Il file è vuoto.",
+          "unsupportedFileType": "Tipo di file non supportato: sono ammessi solo file .gpx e .fit.",
+          "fileTooLarge": "Il file è troppo grande: il limite è {{max}}.",
+          "invalidActivityFile": "Il file non contiene un'attività GPX o FIT valida.",
+          "tooManyPoints": "Il file contiene troppi punti per essere importato.",
+          "parseTimeout": "L'analisi del file ha richiesto troppo tempo.",
+          "eventTooLarge": "L'attività è troppo grande per essere importata.",
+          "internalError": "Errore interno del servizio durante il caricamento. Riprova più tardi."
+        },
+        "status": {
+          "badRequest": "Richiesta non valida.",
+          "badGateway": "Servizio non raggiungibile. Riprova più tardi.",
+          "gatewayTimeout": "Tempo scaduto: il servizio non ha risposto. Riprova.",
+          "clientError": "Il servizio ha rifiutato il caricamento.",
+          "serverError": "Il servizio ha avuto un problema. Riprova più tardi.",
+          "unexpected": "Risposta inattesa dal servizio."
+        },
+        "network": {
+          "interrupted": "Connessione interrotta. Controlla la rete e riprova.",
+          "interruptedLarge": "Connessione interrotta durante l'invio. Con file grandi riprova con una rete più stabile; il limite è {{max}}."
+        }
+      }
     }
   }
 }
