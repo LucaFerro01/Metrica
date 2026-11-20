@@ -17,8 +17,14 @@ namespace TriMetric.Activities;
 /// maxPoints righe, mai le 100.000 dell'attivita'. Indici: <c>round(k*(N-1)/(m-1))</c> per k=0..m-1, m=min(N, maxPoints), in
 /// aritmetica intera (meta' verso l'alto); con N-1 &gt;= m-1 il passo e' almeno 1, quindi nessun doppione, e le differenze tra
 /// indici consecutivi valgono floor o ceil di (N-1)/(m-1).</para>
-/// <para><b>Ordine.</b> Per tempo e, a parita' di istante (il contratto ammette scarti uguali), per <c>ctid</c>: i punti si scrivono
-/// con un solo COPY, quindi l'ordine fisico e' quello dello stream e la scelta e' ripetibile tra due richieste.</para>
+/// <para><b>Ordine.</b> Per tempo e, a parita' di istante (il contratto ammette scarti uguali), per i VALORI delle colonne, in
+/// quest'ordine fisso: <c>latitude, longitude, altitude_meters, heart_rate, power_watts, cadence, speed_mps</c>, ciascuna
+/// crescente con i NULL per ultimi. Tra punti con lo stesso istante l'ordine restituito NON e' quello del file: e' deterministico
+/// per valori. Non si usa <c>ctid</c>: l'ordine fisico non garantisce l'ordine di scrittura (dopo DELETE, INSERT annullati e
+/// VACUUM nella stessa chunk il COPY riempie anche pagine libere piu' avanti: osservato con i <c>ctid</c> reali in una
+/// esecuzione della suite, dove i primi due punti scritti di un flusso di quaranta finirono dopo gli altri trentotto). Un ultimo spareggio
+/// non serve: due righe con tutti i valori uguali sono indistinguibili. La lettura completa e quella ridotta usano la stessa
+/// chiave, quindi coincidono sempre e la riduzione e' ripetibile indipendentemente dal layout fisico.</para>
 /// <para><b>Tempo.</b> <c>TimeOffsetSeconds</c> = (time - inizio) in microsecondi interi / 10^6: l'inverso esatto di
 /// <see cref="StreamWriter"/> (nessuna somma in virgola mobile), gli scarti scritti tornano identici.</para>
 /// <para><b>Colonne.</b> Una colonna senza alcun valore nell'intera attivita' e' <c>null</c> (assente); se ha almeno un valore resta
@@ -36,11 +42,14 @@ public sealed class ActivityStreamReader(ActivitiesDbContext db)
         $"SELECT count(*), {string.Join(", ", ValueColumns.Select(c => $"bool_or({c} IS NOT NULL)"))} "
         + $"FROM {StreamWriter.TableName} WHERE activity_id = @id";
 
+    // Chiave di ordinamento: tempo, poi i valori nell'ordine delle colonne (ASC NULLS LAST esplicito); mai ctid.
+    private static readonly string OrderBy = string.Join(", ", ValueColumns.Select(c => $"{c} ASC NULLS LAST").Prepend("time"));
+
     private static readonly string AllSql =
-        $"SELECT {Select} FROM {StreamWriter.TableName} WHERE activity_id = @id ORDER BY time, ctid";
+        $"SELECT {Select} FROM {StreamWriter.TableName} WHERE activity_id = @id ORDER BY {OrderBy}";
 
     private static readonly string ReducedSql =
-        $"SELECT {Select} FROM (SELECT {Select}, row_number() OVER (ORDER BY time, ctid) - 1 AS idx "
+        $"SELECT {Select} FROM (SELECT {Select}, row_number() OVER (ORDER BY {OrderBy}) - 1 AS idx "
         + $"FROM {StreamWriter.TableName} WHERE activity_id = @id) AS numbered WHERE idx = ANY(@indices) ORDER BY idx";
 
     private const long TicksPerMicrosecond = TimeSpan.TicksPerMillisecond / 1000;

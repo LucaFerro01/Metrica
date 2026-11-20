@@ -2,7 +2,7 @@
 schema_version: 1
 status: ready
 tracking_ref: null
-updated_at: 2026-11-19
+updated_at: 2026-11-20
 ---
 
 # Implementation Plan: Scheletro del sistema e import di file GPX/FIT
@@ -13,7 +13,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 
 ## Global constraints
 
-- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-016): ogni task cita quelle che applica.
+- Decisioni vincolanti in `decisions.md` (DEC-001…DEC-017): ogni task cita quelle che applica.
 - Target `net10.0`, SDK fissato da `global.json` (DEC-004). Un progetto per servizio.
 - Nessun codice condiviso di produzione oltre a `contracts`, `ServiceDefaults`, `Messaging`; nessuna dipendenza di questi da un servizio; un servizio non legge lo schema di un altro (REQ-023). `tests/TriMetric.TestInfrastructure` è codice di test condiviso (DEC-013).
 - Ogni endpoint dei servizi usa `RequireAuthorization()` e legge `userId` dal `ClaimsPrincipal`, mai dalla richiesta (DEC-006). Ogni servizio espone `public partial class Program` per i test con `WebApplicationFactory`.
@@ -54,6 +54,7 @@ Un file GPX o FIT caricato dal web viene tradotto da `ingestion`, pubblicato com
 | REQ-026 | AC-001, AC-004 | T17 | `pnpm -C src/web test` |
 | REQ-027, REQ-028 | AC-001, AC-010 | T18 | `pnpm -C src/web test` |
 | REQ-030, REQ-037 | AC-001 | T16, T17, T18 | controllo automatico `scrollWidth <= innerWidth` a 375 px e a 1280 px (Playwright); navigazione in basso sotto 768 px e barra laterale da 768 px |
+| REQ-040 | AC-001 | T18 | test dell'API di `activities` (filtro esatto, isolamento tra utenti, validazione) e del web (riga «in elaborazione» che si risolve per un'attività con data vecchia) |
 | REQ-039 | — | T16 | test del tema (sistema/chiaro/scuro, persistenza) e della parità delle chiavi di traduzione |
 | REQ-038 | — | T16, T17 | test della base URL configurabile; regola di lint su `localStorage` e `window.open`; metadati di viewport |
 | REQ-032 | AC-001…AC-008, AC-012, AC-014 | T15 | `dotnet test tests/TriMetric.IntegrationTests` |
@@ -672,12 +673,13 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 ### T18: Web — elenco e dettaglio attività
 
 **Status:** pending
-**Covers:** REQ-027, REQ-028, REQ-030, REQ-037; AC-001, AC-010; DEC-008, DEC-015
+**Covers:** REQ-027, REQ-028, REQ-030, REQ-037, REQ-040; AC-001, AC-010; DEC-008, DEC-015, DEC-017
 **Depends on:** T16, T17
 **Tier:** standard — pagine di lettura con polling.
 
 **Action:**
-- Elenco: attività (data, sport, distanza, durata, dislivello) come schede sotto 768 px e come tabella da 768 px, filtro per sport, paginazione; righe "in elaborazione" per gli upload accettati non ancora presenti (corrispondenza su `externalId`); polling ogni 2 s solo finché esiste almeno un caricamento in elaborazione, con timeout oltre il quale mostra "ancora in elaborazione, riprova".
+- Prerequisito backend (DEC-017, scelta dell'utente): filtro opzionale `externalId` su `GET /activities` in `src/services/activities` (corrispondenza esatta, solo dell'utente, validato come gli altri parametri, OpenAPI aggiornato) con test; poi `pnpm gen:api`. Commit separato prima del lavoro sul web.
+- Elenco: attività (data, sport, distanza, durata, dislivello) come schede sotto 768 px e come tabella da 768 px, filtro per sport, paginazione; righe "in elaborazione" per gli upload accettati non ancora presenti (si verifica con `GET /activities?externalId=...`, non cercando nella pagina visibile: DEC-017); polling ogni 2 s solo finché esiste almeno un caricamento in elaborazione, con timeout oltre il quale mostra "ancora in elaborazione, riprova".
 - Dettaglio: riepilogo (data, sport, distanza, durata, durata in movimento, dislivello, FC, potenza, cadenza medie) e giri; "non disponibile" per i campi assenti; 404 gestito.
 - Test: elenco con filtro e paginazione; riga "in elaborazione" che diventa attività dopo il polling; dettaglio con campi mancanti; 404. Test Playwright (API simulata) a 375 px e a 1280 px su elenco e dettaglio: `scrollWidth <= innerWidth`; a 375 px le righe sono schede e c'è la navigazione in basso, a 1280 px tabella e barra laterale.
 

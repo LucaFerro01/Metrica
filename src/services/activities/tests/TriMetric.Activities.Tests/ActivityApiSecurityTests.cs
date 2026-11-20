@@ -185,10 +185,26 @@ public sealed partial class ActivityApiSecurityTests(TimescaleFixture db, NatsFi
 
         // Parametri: tipi corretti per il client generato e nessun parametro di identita'.
         var listParameters = Parameters(list);
-        Assert.Equal(["page", "pageSize", "sport"], listParameters.Keys.Order(StringComparer.Ordinal));
+        Assert.Equal(["externalId", "page", "pageSize", "sport"], listParameters.Keys.Order(StringComparer.Ordinal));
         AssertInteger(listParameters["page"], minimum: 1, maximum: null, @default: 1);
         AssertInteger(listParameters["pageSize"], minimum: 1, maximum: 100, @default: 20);
         Assert.Contains("#/components/schemas/Sport", listParameters["sport"].GetRawText());
+        // externalId (DEC-017): stringa opzionale in query, con la lunghezza massima validata dall'handler (128), senza minimo
+        // ne' predefinito ne' pattern (il client generato non deve imporre regole piu' strette del server).
+        var externalId = listParameters["externalId"];
+        Assert.Equal("query", externalId.GetProperty("in").GetString());
+        Assert.True(!externalId.TryGetProperty("required", out var externalIdRequired) || !externalIdRequired.GetBoolean());
+        var externalIdSchema = externalId.GetProperty("schema");
+        Assert.Equal(["string"], TypeNames(externalIdSchema));
+        Assert.Equal(128, externalIdSchema.GetProperty("maxLength").GetInt32());
+        Assert.False(externalIdSchema.TryGetProperty("minLength", out _));
+        Assert.False(externalIdSchema.TryGetProperty("pattern", out _));
+        Assert.False(externalIdSchema.TryGetProperty("default", out _));
+        Assert.False(externalIdSchema.TryGetProperty("enum", out _));
+        foreach (var name in new[] { "page", "pageSize", "sport" })
+        {
+            Assert.True(!listParameters[name].TryGetProperty("required", out var required) || !required.GetBoolean(), $"{name} deve restare opzionale");
+        }
         var detailParameters = Parameters(detail);
         Assert.Equal(["id", "maxPoints"], detailParameters.Keys.Order(StringComparer.Ordinal));
         AssertInteger(detailParameters["maxPoints"], minimum: 2, maximum: 5000, @default: 1000);

@@ -1,6 +1,6 @@
 ---
 schema_version: 1
-updated_at: 2026-11-19
+updated_at: 2026-11-20
 ---
 
 # Technical Decisions: Scheletro del sistema e import di file GPX/FIT
@@ -100,3 +100,15 @@ updated_at: 2026-11-19
 **Rationale:** Decisioni dell'utente sul tema, sullo stile, sulla lingua e sui componenti (conversazione del 2026-11-19); per tre schermate semplici i componenti scritti a mano evitano file e dipendenze inutili. I colori semantici rendono lo stile modificabile senza toccare le pagine.
 **Alternatives considered:** solo chiaro o solo scuro; stile sportivo con accento vivace; solo italiano senza traduzioni; shadcn/ui subito.
 **Consequences:** Aggiungere le traduzioni in due lingue per ogni testo nuovo; il test di parità tra le lingue lo impone. Il selettore di lingua e l'interruttore del tema usano `shared/lib/storage` (DEC-015). Nello scheletro non c'è altra lingua oltre a italiano e inglese.
+
+### DEC-017: Filtro `externalId` su `GET /activities` (scelta dell'utente prima di T18)
+**Decision:** `GET /activities` accetta il parametro opzionale `externalId` (corrispondenza esatta, solo tra le attività dell'utente del principal), combinabile con `sport`, `page` e `pageSize`; `total` conta le attività che soddisfano il filtro. Validazione come per gli altri parametri (letto come testo; vuoto, ripetuto, più lungo di 128 caratteri o con caratteri di controllo → 400 `urn:trimetric:problem:invalid-query`, mai correzioni silenziose); query parametrizzata; nessun log del valore. Il web lo usa per riconoscere in modo esatto un upload appena importato.
+**Rationale:** L'elenco è ordinato per data di inizio dell'attività, non per momento di caricamento: un file vecchio comparirebbe in una pagina successiva e la riga «in elaborazione» non lo troverebbe mai nella pagina visibile. Alternative scartate dall'utente: corrispondenza solo nella pagina corrente (limite noto, resta «in elaborazione» fino al timeout) e confronto del `total` (fragile). La scelta è dell'utente (risposta del 2026-11-20).
+**Alternatives considered:** vedi sopra; un endpoint dedicato `GET /activities/by-external-id/{id}` (più superficie per lo stesso scopo).
+**Consequences:** Modifica all'interfaccia di T13 (nuovo parametro opzionale, compatibile all'indietro), con test e OpenAPI aggiornati e tipi del web rigenerati (`pnpm gen:api`). Nessuna migrazione: la tabella ha già l'unicità per `(user_id, source, external_id)`; il filtro per solo `externalId` può restituire più righe se in futuro più fonti condividessero lo stesso identificativo (oggi la fonte è solo `file`, con SHA-256 come identificativo).
+
+### DEC-018: Ordine dei punti con lo stesso istante nel dettaglio (decisione del controller in assenza dell'utente, 2026-11-20)
+**Decision:** Nel dettaglio di un'attività i punti dello stream si ordinano per `time` e, a parità di istante, per i valori delle colonne in un ordine fisso (`latitude, longitude, altitude_meters, heart_rate, power_watts, cadence, speed_m_s`, ciascuna crescente con i `NULL` per ultimi). Il `ctid` non si usa più come spareggio. Lettura completa e lettura ridotta (`maxPoints`) usano lo stesso ordine, quindi la riduzione è ripetibile indipendentemente dal layout fisico del database. L'ordine tra punti allo stesso istante NON è quello del file.
+**Rationale:** Il `ctid` non garantisce l'ordine di scrittura: con il layout fisico lasciato da altre scritture e cancellazioni (chunk riutilizzata) il COPY può mettere righe in pagine non crescenti. Il test `EqualTimeOffsets…` di T13 è fallito circa 1 volta su 8 nelle esecuzioni complete, con ctid reali fuori ordine (due punti scritti per primi finivano in pagine successive agli altri 38). Un ordine per valori è deterministico, non richiede migrazioni e per punti con lo stesso istante (anomalia dei dati: un file reale a 1 Hz ha istanti distinti) l'ordine tra loro è irrilevante per l'utente.
+**Alternatives considered:** colonna `seq` scritta dal writer con ordine `(time, seq)` (ordine di scrittura esatto, ma richiede una migrazione non prevista dal piano e quindi un'approvazione dell'utente: assente); lasciare il `ctid` dichiarando l'ordine non specificato e correggere il test (ripetibilità non garantita); spostare di 1 µs i punti uguali (altera i dati e rompe «gli scarti scritti tornano identici»).
+**Consequences:** L'ordine tra pari istante può differire da quello del file; il commento di `ActivityStreamReader` e quello del test sono riscritti. Se in futuro l'ordine di scrittura dovesse contare, si aggiunge `seq` con una migrazione approvata. Il costo dell'ordinamento su più colonne è trascurabile (le chiavi extra si confrontano solo sui pari istante).

@@ -332,10 +332,12 @@ public sealed class ActivityDetailApiTests(TimescaleFixture db, NatsFixture nats
     }
 
     [Fact]
-    public async Task EqualTimeOffsets_AreAllReturned_InTheOrderWritten_AndTheReductionIsRepeatable()
+    public async Task EqualTimeOffsets_AreAllReturned_OrderedByLatitude_AndTheReductionIsRepeatable()
     {
-        // Il contratto ammette scarti uguali: l'ordine tra punti allo stesso istante e' quello di scrittura (spareggio su ctid)
-        // e due richieste identiche scelgono gli stessi punti. La latitudine codifica la posizione di scrittura.
+        // Il contratto ammette scarti uguali: tra punti allo stesso istante l'ordine e' deterministico per valori (prima colonna
+        // dello spareggio: latitudine crescente) e due richieste identiche scelgono gli stessi punti. Qui la latitudine cresce
+        // con la posizione nel file, quindi l'ordine atteso coincide con quello di scrittura (non e' una garanzia del prodotto:
+        // vedi il test con latitudini decrescenti).
         const int n = 40;
         var offsets = Enumerable.Range(0, n).Select(i => (double)(i / 4)).ToArray();   // quattro punti per ogni istante
         var latitude = Enumerable.Range(0, n).Select(i => (double?)(1000 + i)).ToArray();
@@ -346,7 +348,7 @@ public sealed class ActivityDetailApiTests(TimescaleFixture db, NatsFixture nats
 
         var all = await ApiData.DetailAsync(client, activity.Id);
         Assert.Equal(offsets, all.Stream.TimeOffsetSeconds);
-        Assert.Equal(latitude, all.Stream.Latitude);   // tutti e 40, nell'ordine di scrittura
+        Assert.Equal(latitude, all.Stream.Latitude);   // tutti e 40, per istante e poi per latitudine crescente
 
         var first = await ApiData.DetailAsync(client, activity.Id, "?maxPoints=7");
         var second = await ApiData.DetailAsync(client, activity.Id, "?maxPoints=7");
@@ -355,6 +357,55 @@ public sealed class ActivityDetailApiTests(TimescaleFixture db, NatsFixture nats
         Assert.Equal(1000.0, first.Stream.Latitude![0]);
         Assert.Equal(1000.0 + n - 1, first.Stream.Latitude![^1]);
         Assert.Equal(ApiData.ExpectedIndices(n, 7).Select(i => (double?)(1000 + i)), first.Stream.Latitude);
+    }
+
+    [Fact]
+    public async Task EqualTimeOffsets_AreOrderedByValues_NotByWriteOrder_NullsLast_ForFullAndReducedReads()
+    {
+        // Contratto: a parita' di istante i punti si ordinano per latitude, longitude, altitude_meters, heart_rate, power_watts,
+        // cadence, speed_mps (crescenti, NULL per ultimi); l'ordine del file e l'ordine fisico (ctid) non contano. Ogni istante ha
+        // cinque punti SCRITTI nell'ordine A,B,C,D,E, opposto a quello atteso D,C,B,E,A:
+        //   A lat=null hr=5    B lat=3 hr=null    C lat=3 hr=2    D lat=2 hr=9    E lat=null hr=1
+        // D prima (latitudine minore), C prima di B (stessa latitudine, FC 2 prima di null), E prima di A (latitudine null,
+        // FC 1 prima di 5). La cadenza identifica il punto (indice di scrittura) e non influisce sull'ordine.
+        const int instants = 10;
+        const int perInstant = 5;
+        const int n = instants * perInstant;
+        int[] expectedWithinInstant = [3, 2, 1, 4, 0];   // indici di scrittura D,C,B,E,A
+        double?[] lat = [null, 3, 3, 2, null];
+        double?[] hr = [5, null, 2, 9, 1];
+        var offsets = Enumerable.Range(0, n).Select(i => (double)(i / perInstant)).ToArray();
+        var latitude = Enumerable.Range(0, n).Select(i => lat[i % perInstant] is { } l ? (double?)(l + (10 * (i / perInstant))) : null).ToArray();
+        var heartRate = Enumerable.Range(0, n).Select(i => hr[i % perInstant]).ToArray();
+        var cadence = Enumerable.Range(0, n).Select(i => (double?)i).ToArray();
+        var stream = new StreamColumns(offsets, latitude, null, null, heartRate, null, cadence, null);
+        var (user, activity) = await SeedAsync(stream);
+        await using var host = ActivitiesHost.Development(db, nats, userId: user);
+        using var client = host.Start();
+
+        var expected = Enumerable.Range(0, n)
+            .Select(i => (i / perInstant * perInstant) + expectedWithinInstant[i % perInstant])   // indice di scrittura atteso alla posizione i
+            .ToArray();
+
+        var all = await ApiData.DetailAsync(client, activity.Id);
+        Assert.Equal(offsets, all.Stream.TimeOffsetSeconds);
+        Assert.Equal(expected.Select(i => (double?)i), all.Stream.Cadence);
+        Assert.Equal(expected.Select(i => latitude[i]), all.Stream.Latitude);
+        Assert.Equal(expected.Select(i => heartRate[i]), all.Stream.HeartRate);
+
+        // Riduzione: stessi indici di sempre applicati alla sequenza ORDINATA PER VALORI, identica nella lettura ridotta.
+        const int maxPoints = 9;
+        var picked = ApiData.ExpectedIndices(n, maxPoints).Select(k => expected[(int)k]).ToArray();
+        var first = await ApiData.DetailAsync(client, activity.Id, $"?maxPoints={maxPoints}");
+        var second = await ApiData.DetailAsync(client, activity.Id, $"?maxPoints={maxPoints}");
+        Assert.Equal(maxPoints, first.Stream.TimeOffsetSeconds.Count);
+        Assert.Equal(picked.Select(i => (double?)i), first.Stream.Cadence);
+        Assert.Equal(picked.Select(i => latitude[i]), first.Stream.Latitude);
+        Assert.Equal(picked.Select(i => heartRate[i]), first.Stream.HeartRate);
+        Assert.Equal(first.Stream.Cadence, second.Stream.Cadence);
+        Assert.Equal(first.Stream.TimeOffsetSeconds, second.Stream.TimeOffsetSeconds);
+        Assert.Equal(expected[0], first.Stream.Cadence![0]);
+        Assert.Equal(expected[^1], first.Stream.Cadence![^1]);
     }
 
     private static IEnumerable<string> Chain(Exception error)

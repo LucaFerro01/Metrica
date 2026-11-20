@@ -16,7 +16,7 @@ namespace TriMetric.Activities;
 /// <summary>
 /// API di lettura delle attivita' (T13; REQ-018, REQ-019, REQ-021, REQ-022; dietro al gateway <c>/api/activities</c>):
 /// <list type="bullet">
-/// <item><c>GET /activities?sport=&amp;page=1&amp;pageSize=20</c> → <see cref="ActivityListPage"/> (operationId <c>ListActivities</c>);</item>
+/// <item><c>GET /activities?sport=&amp;externalId=&amp;page=1&amp;pageSize=20</c> → <see cref="ActivityListPage"/> (operationId <c>ListActivities</c>);</item>
 /// <item><c>GET /activities/{id}?maxPoints=1000</c> → <see cref="ActivityDetail"/> (operationId <c>GetActivity</c>).</item>
 /// </list>
 /// </summary>
@@ -26,8 +26,13 @@ namespace TriMetric.Activities;
 /// utente risponde 404 esattamente come un id inesistente.</para>
 /// <para><b>Parametri.</b> Si leggono come testo e si validano qui: un valore fuori intervallo, non numerico, vuoto o ripetuto
 /// risponde 400 <c>ProblemDetails</c> (mai una correzione silenziosa), con lo stesso formato in ogni ambiente. Nel documento
-/// OpenAPI hanno i tipi veri (interi con minimo, massimo e predefinito; <c>sport</c> come enum <see cref="Sport"/>) grazie a
-/// <see cref="AddActivityApiDocument"/>.</para>
+/// OpenAPI hanno i tipi veri (interi con minimo, massimo e predefinito; <c>sport</c> come enum <see cref="Sport"/>;
+/// <c>externalId</c> come stringa con <c>maxLength</c> 128) grazie a <see cref="AddActivityApiDocument"/>.</para>
+/// <para><b>Filtro <c>externalId</c> (DEC-017).</b> Corrispondenza esatta e case-sensitive (uguaglianza SQL con parametro, mai
+/// <c>LIKE</c>: <c>%</c> e <c>_</c> non sono jolly) tra le sole attivita' dell'utente del principal, combinabile con
+/// <c>sport</c>, <c>page</c> e <c>pageSize</c>; <c>total</c> conta le attivita' che rispettano tutti i filtri. Assente = nessun
+/// filtro; vuoto, ripetuto, piu' lungo di <see cref="MaxExternalIdLength"/> caratteri o con caratteri di controllo o spazi = 400.
+/// Il valore ricevuto non si riporta mai nella risposta ne' nei log.</para>
 /// <para>Nessun log (REQ-034); query EF parametrizzate e <c>AsNoTracking</c>; elenco = una query per la pagina e una per il totale.</para>
 /// </remarks>
 public static class ActivityEndpoints
@@ -40,6 +45,18 @@ public static class ActivityEndpoints
     public const int DefaultPage = 1;
     public const int DefaultPageSize = 20;
     public const int MaxPageSize = 100;
+
+    /// <summary>
+    /// Lunghezza massima di <c>externalId</c> in caratteri (unita' UTF-16 di <see cref="string.Length"/>).
+    /// </summary>
+    /// <remarks>
+    /// Volutamente piu' stretta dei limiti dell'importer (<see cref="ActivityImportedValidation.MaxKeyLength"/> = 256, che accetta
+    /// anche spazi): l'unica fonte oggi, <c>file</c>, produce lo SHA-256 esadecimale del contenuto, 64 caratteri senza spazi, e il
+    /// filtro serve a ritrovare proprio quegli identificativi. Un identificativo piu' lungo o con spazi (una fonte futura) puo'
+    /// essere memorizzato ma NON e' raggiungibile con il filtro, che risponde 400. Se arriva un'altra fonte i due limiti vanno
+    /// riallineati (DEC-017).
+    /// </remarks>
+    public const int MaxExternalIdLength = 128;
 
     private const string TypePrefix = "urn:trimetric:problem:";
 
@@ -70,7 +87,7 @@ public static class ActivityEndpoints
     /// <summary>
     /// Completa il documento OpenAPI per il client generato (DEC-007): schemi dei parametri di query, che gli handler leggono come
     /// testo (<c>page</c> e <c>pageSize</c> interi con limiti e predefiniti, <c>sport</c> riferito allo schema <see cref="Sport"/>,
-    /// <c>maxPoints</c> intero con il massimo configurato), e <c>type: string</c> sullo schema <see cref="Sport"/> (enum minuscolo).
+    /// <c>externalId</c> stringa opzionale con <c>maxLength</c> pari a <see cref="MaxExternalIdLength"/>, <c>maxPoints</c> intero con il massimo configurato), e <c>type: string</c> sullo schema <see cref="Sport"/> (enum minuscolo).
     /// </summary>
     public static OpenApiOptions AddActivityApiDocument(this OpenApiOptions options)
     {
@@ -101,6 +118,7 @@ public static class ActivityEndpoints
                     "pageSize" => Integer(1, MaxPageSize, DefaultPageSize),
                     "maxPoints" => Integer(ActivitiesApiOptions.MinMaxPoints, maxStream, ActivitiesApiOptions.DefaultMaxPoints),
                     "sport" => new OpenApiSchemaReference(nameof(Sport), context.Document),
+                    "externalId" => new OpenApiSchema { Type = JsonSchemaType.String, MaxLength = MaxExternalIdLength },
                     _ => parameter.Schema,
                 };
             }
@@ -121,8 +139,10 @@ public static class ActivityEndpoints
     private static async Task<IResult> ListAsync(
         ClaimsPrincipal user,
         [FromQuery] string? sport,
+        [FromQuery] string? externalId,
         [FromQuery] string? page,
         [FromQuery] string? pageSize,
+        HttpRequest request,
         [FromServices] ActivitiesDbContext db,
         CancellationToken ct)
     {
@@ -152,10 +172,26 @@ public static class ActivityEndpoints
             sportFilter = parsed;
         }
 
+        // externalId: un valore ripetuto arriva come "a,b" nel parametro letto come testo, ma una virgola e' un carattere
+        // ammesso: si conta quindi sulla query grezza. Il valore non entra mai nel messaggio di errore.
+        if (externalId is not null && (request.Query["externalId"].Count != 1 || !IsValidExternalId(externalId)))
+        {
+            return InvalidQuery(
+                "externalId",
+                $"deve essere un testo di al massimo {MaxExternalIdLength} caratteri, senza spazi né caratteri di controllo, indicato una sola volta.");
+        }
+
+        // L'utente viene SEMPRE dal principal e il vincolo e' nella query di base: ogni filtro successivo lo restringe soltanto.
         var query = db.Activities.AsNoTracking().Where(a => a.UserId == userId);
         if (sportFilter is { } s)
         {
             query = query.Where(a => a.Sport == s);
+        }
+
+        if (externalId is not null)
+        {
+            // Uguaglianza esatta con parametro (case-sensitive con le regole di confronto del database): mai LIKE.
+            query = query.Where(a => a.ExternalId == externalId);
         }
 
         var total = await query.CountAsync(ct);
@@ -265,6 +301,28 @@ public static class ActivityEndpoints
             case "other": sport = Sport.Other; return true;
             default: sport = default; return false;
         }
+    }
+
+    /// <summary>
+    /// <c>externalId</c> valido: da 1 a <see cref="MaxExternalIdLength"/> caratteri, nessun carattere di controllo (anche C1) e
+    /// nessuno spazio (compresi quelli Unicode). Nessuna normalizzazione: il valore si confronta cosi' com'e'.
+    /// </summary>
+    private static bool IsValidExternalId(string value)
+    {
+        if (value.Length is 0 or > MaxExternalIdLength)
+        {
+            return false;
+        }
+
+        foreach (var c in value)
+        {
+            if (char.IsControl(c) || char.IsWhiteSpace(c))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>400 con <c>type</c> e <c>title</c> stabili; il <c>detail</c> nomina il parametro, mai il valore ricevuto.</summary>
