@@ -723,7 +723,7 @@ public interface IActivityFileParser { bool CanParse(string fileName); ParsedAct
 
 ### T20: Verifica finale e aggiornamento dell'architettura
 
-**Status:** pending
+**Status:** completed
 **Covers:** REQ-005, REQ-030, REQ-033, REQ-034, REQ-037, REQ-038; AC-001, AC-013; DEC-004, DEC-005, DEC-009, DEC-012, DEC-015
 **Depends on:** T19
 **Tier:** standard — verifica complessiva e allineamento documentale.

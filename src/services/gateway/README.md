@@ -82,7 +82,7 @@ I backend ricavano l'utente solo dal proprio principal; il gateway non aggiunge 
 
 `appsettings.json`: Kestrel **solo** su `http://localhost:5080` (DEC-009: il gateway ascolta su `localhost`, i servizi su `127.0.0.1`;
 mai `0.0.0.0`), `Gateway:MaxRequestBodyBytes` e la sezione `ReverseProxy` (rotte e cluster, indirizzi `127.0.0.1:5081` e `127.0.0.1:5082`).
-Nessun `appsettings.Development.json`: non c'è nulla di specifico dell'ambiente, né segreti né identità di sviluppo. Il dev server di Vite
+`AllowedHosts` è `*` (limite noto: nessuna restrizione dell'`Host`; ristretto a `localhost;127.0.0.1` fermerebbe il DNS rebinding, non il CSRF). In `Development`, con l'identità fissa dei servizi, un form cross-site (multipart, senza preflight) verso `http://localhost:5080` è accettato e `ingestion` dichiara `DisableAntiforgery()`: nessuna mitigazione presente oggi (servirebbero un controllo di `Origin` e/o un token anti-falsificazione, oppure un'identità reale con token Bearer **[Ipotesi]**). Nessun `appsettings.Development.json`: non c'è nulla di specifico dell'ambiente, né segreti né identità di sviluppo (il gateway non autentica: l'identità la fornisce ogni servizio). Il dev server di Vite
 inoltra `/api` al gateway. Per ridefinire un indirizzo: `ReverseProxy:Clusters:<ingestion|activities>:Destinations:primary:Address`.
 
 ## Salute

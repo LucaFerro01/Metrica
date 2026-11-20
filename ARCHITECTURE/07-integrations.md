@@ -40,11 +40,11 @@ Nessuna integrazione diretta: l'app Bryton si collega a Strava e le attività ar
 
 ## File FIT e GPX
 
-- Caricamento manuale dal frontend.
-- **FIT:** formato binario dei dispositivi, con dati completi (FC, potenza, cadenza, vasche). Libreria .NET per il parsing da scegliere (es. SDK FIT di Garmin per .NET o una libreria di terze parti) **[da valutare]**.
-- **GPX:** XML con tracce e punti; meno ricco, parsing semplice.
-- Precauzioni: limite di dimensione, tempo massimo di parsing, nessuna fiducia nel contenuto (vedi [06-security.md](06-security.md)).
-- Deduplicazione rispetto alle attività già arrivate da Strava (stesso orario di inizio, durata e distanza compatibili).
+- Caricamento manuale dal frontend. **Realizzato nello scheletro** (pagina «Carica» e `POST /uploads` di `ingestion`).
+- **FIT:** formato binario dei dispositivi, con dati completi (FC, potenza, cadenza, vasche). Libreria scelta: SDK FIT di Garmin per .NET (`Garmin.FIT.Sdk` 21.221.0, DEC-002), confinata in `FitParser` dietro `IActivityFileParser`, quindi sostituibile; la sua licenza va riletta prima di distribuire il prodotto. Provato con file FIT deterministici generati con il codificatore dello stesso SDK (`Samples/ride.fit` ne è l'output), **non** con file reali di dispositivi; lo sport nuoto è riconosciuto ma le vasche non sono estratte.
+- **GPX:** XML con tracce e punti; meno ricco, parsing semplice (`XmlReader` indurito, senza DTD). Come per il FIT, **non** provato con file reali di dispositivi (le estensioni dei produttori sono provate solo con file sintetici dei test, compresa quella Garmin).
+- Precauzioni: limite di dimensione (32 MiB), tempo massimo di parsing, tetto di 100.000 punti, nessuna fiducia nel contenuto (vedi [06-security.md](06-security.md)). Realizzate.
+- Deduplicazione: **realizzata** per contenuto (stesso utente e stesso SHA-256 del file = duplicato, anche con un altro nome). Quella rispetto alle attività già arrivate da Strava (stesso orario di inizio, durata e distanza compatibili) è **prevista**: Strava non è ancora integrato.
 
 ## Altre fonti (idee)
 
