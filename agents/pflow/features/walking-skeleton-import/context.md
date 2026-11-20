@@ -7,8 +7,12 @@ branch: "feature/walking-skeleton-import"
 integration_branch: null
 base_commit: null
 workspace_mode: primary
-status: implementation
+status: closed
 created_at: 2026-11-12
+closed_at: 2026-11-20T00:00:00Z
+closure_result: verified
+integration: pull-request
+integration_ref: https://github.com/LucaFerro01/Metrica/pull/1
 ---
 
 # Scheletro del sistema e import di file GPX/FIT
@@ -91,10 +95,67 @@ Preparare solution .NET e ServiceDefaults, poi importare un file GPX/FIT da inge
   - **Copertura (ogni REQ/AC ha almeno una verifica eseguita):** AC-001 `GpxImportTests.Ac001`, web `activities.spec`/`real-stack`; AC-002 `FitImportTests.Ac002`; AC-003 `DeduplicationTests.Ac003`; AC-004 `UploadValidationTests` e test web dell'upload; AC-005 `NatsOutageTests`; AC-006 `RedeliveryTests`; AC-007 `UserIsolationTests` e filtro `externalId`; AC-008 `SchemaIsolationTests`; AC-009 test in ambiente non-Development (401) di ingestion e activities; AC-010 test dell'API e dell'elenco web; AC-011 test del dettaglio con `maxPoints` e `LargeActivityTests`; AC-012 `DeadLetterTests`; AC-013 build e avvio da zero in clone pulito (T20); AC-014 `LargeActivityTests` (50.000, 100.000, 100.001 punti, evento < 8.000.000 byte). REQ come nella tabella di copertura del piano; REQ-034 anche con il rilevatore di log a Trace; REQ-037…REQ-040 con test web e dell'API. **Limiti della copertura (non verificato):** vedi le voci «Limiti noti / non verificato» di T11–T19; in particolare nessun test di latenza per AC-001 («pochi secondi»: misurato circa 2,7 s per 50.000 punti), AC-006 è un test di idempotenza e non di una vera riconsegna JetStream, `MaxDeliverExceeded` ed `EventTooBig` non esercitati con un server vero, nessuna prova con più istanze o processi sullo stesso durevole, nessun upload reale vicino a 32 MiB, nessuna prova su telefono, con tastiera o screen reader veri né su Firefox o Safari, Podman/Linux/macOS/PowerShell 7 non provati.
   - **Documentazione aggiornata (24+ file):** ADR 0003 e 0004 → Accettata con la sezione «Esito dello scheletro» (problemi incontrati e soluzioni, limiti non provati, misure attribuite al registro di sviluppo), sezioni «Esito» in ADR 0002, 0005, 0006, 0007; `ARCHITECTURE/00-overview`, `01-services`, `02-communication`, `03-data`, `04-frontend`, `05-infrastructure`, `06-security`, `07-integrations` e `README.md` (convenzione di lettura riscritta: Implementato/Provato, Previsto, [Ipotesi]; decisioni aperte aggiornate; prefissi T/DEC/REQ/AC spiegati); README radice (stato onesto, albero con `scripts/`, `docs/`, `tests/`, `src/web`, `.config/dotnet-tools.json`, stack corretto: EF Core + COPY, script e non Aspire, componenti scritti a mano), README di activities, ingestion, gateway, Messaging, contracts e dei tre servizi non implementati. Correzioni dalla revisione indipendente: `AllowedHosts` ferma il DNS rebinding ma NON il CSRF (un form cross-site verso `localhost:5080` ha `Host: localhost:5080`, il multipart è una richiesta semplice senza preflight e `DisableAntiforgery()` è esplicito: nessuna mitigazione per il CSRF oggi; con identità e token Bearer il problema da cookie non si pone: [Ipotesi]); ruolo e schema di identity/analytics/training-plan esistono già nello script di init e `EVENTS` riserva i loro prefissi; «implementato e provato» limitato ai punti davvero tali; ecc.
 - 2026-11-20 — **Istruzione dell'utente rispettata: fermarsi a T20.** T21 (guscio Capacitor) NON avviato; il ramo `feature/walking-skeleton-import` NON è integrato (nessun merge, push o PR: decisione dell'utente). **Stato di ripresa:** T01–T20 completati e committati; restano T21 (richiede azioni umane: account Apple Developer e compilazione iOS nel cloud; Android da Windows; CORS del gateway) e la decisione su come integrare il ramo. Backlog emerso (non nel piano): modello atleta/allenatore e `identity`, integrazione Strava, `analytics`, `training-plan`; indice `(user_id, external_id)` su `activities` (richiede migrazione approvata); restringere la rotta di ingestion nel gateway (espone `/health/*`); `AllowedHosts` e protezione CSRF; fissare le immagini `timescaledb:latest-pg16` e `nats:2`; errore durante il `COPY` che lascia la transazione da annullare; NaN/∞ nelle colonne di valori accettati dal writer (rifiutati prima dalla validazione); flake `SchemaTests.UniqueIndex…` di ingestion.
-- 2026-11-20 — **Rinomina del progetto da TriMetric a Metrica** (su richiesta dell'utente, in vista del repository GitHub `LucaFerro01/Metrica`). Rinominati solution (`Metrica.slnx`), 31 cartelle e file di progetto (`Metrica.*`), namespace, nomi di assembly, chiavi di `localStorage` (`metrica.theme`, `metrica.language`), variabili d'ambiente (`METRICA_*`), progetto Compose e volumi (`metrica_*`), nome del database e del superutente di sviluppo (`metrica`), pacchetto web (`metrica-web`) e tutta la documentazione, compresi i registri storici di questo file e del piano (i testi storici citano ora `Metrica.*`). **Non rinominato:** il link al PoC originale nel README (`LucaFerro01/TriMetric`), che resta il nome di quel repository. **Effetti da conoscere:** (1) nuovi volumi Docker `metrica_postgres-data` e `metrica_nats-data`: i dati di sviluppo dei vecchi volumi `trimetric_*` non sono più collegati (restano su disco finché non si eliminano); (2) lo snapshot EF contiene i nomi di tipo con il nuovo namespace e `has-pending-model-changes` risponde «nessuna modifica» per ingestion e activities: nessuna migrazione nuova, la cronologia `__EFMigrationsHistory` non cambia; (3) un database creato con il vecchio script di inizializzazione ha il database `trimetric`: con i nuovi volumi lo script crea `metrica`. **Incidente:** il comando che ha rimosso le cartelle `bin`/`obj` di .NET ha cancellato anche le cartelle `bin` dentro `src/web/node_modules`; ripristinate con `pnpm install --frozen-lockfile --force` (nessun file tracciato toccato).
+- 2026-11-20 — **Rinomina del progetto da TriMetric a Metrica** (su richiesta dell'utente, in vista del repository GitHub `LucaFerro01/Metrica`). Rinominati solution (`Metrica.slnx`), cartelle e file di progetto (`Metrica.*`), namespace, nomi di assembly, chiavi di `localStorage` (`metrica.theme`, `metrica.language`), variabili d'ambiente (`METRICA_*`), progetto Compose e volumi (`metrica_*`), nome del database e del superutente di sviluppo (`metrica`), pacchetto web (`metrica-web`) e tutta la documentazione, compresi i registri storici di questo file e del piano (i testi storici citano ora `Metrica.*`). **Non rinominato:** il link al PoC originale nel README (`LucaFerro01/TriMetric`), che resta il nome di quel repository. **Effetti da conoscere:** (1) nuovi volumi Docker `metrica_postgres-data` e `metrica_nats-data`: i dati di sviluppo dei vecchi volumi `trimetric_*` non sono più collegati (restano su disco finché non si eliminano); (2) lo snapshot EF contiene i nomi di tipo con il nuovo namespace e `has-pending-model-changes` risponde «nessuna modifica» per ingestion e activities: nessuna migrazione nuova, la cronologia `__EFMigrationsHistory` non cambia; (3) un database creato con il vecchio script di inizializzazione ha il database `trimetric`: con i nuovi volumi lo script crea `metrica`. **Incidente:** il comando che ha rimosso le cartelle `bin`/`obj` di .NET ha cancellato anche le cartelle `bin` dentro `src/web/node_modules`; ripristinate con `pnpm install --frozen-lockfile --force` (nessun file tracciato toccato).
+- 2026-11-20 — **Chiusura formale: verificata, integrata con la PR 1 (merge `aea32c5` su `master`).** L'utente ha pubblicato il ramo su `LucaFerro01/Metrica`, aperto la PR e fatto il merge da GitHub (alberi di `2724d52` e del merge identici). Alla chiusura: T21 spostato fuori dalla feature (approvato dall'utente), AC-001 provato anche a mano dall'utente (dichiarato in chat). Il commit di questo record è fatto dall'utente su `master` (policy `manual`).
 
 ## Requirements
 - `requirements.md` — 39 REQ e 14 AC; ambito: setup .NET, ingestion (GPX/FIT), activities, gateway YARP, web React; fuori ambito: Strava, identity, analytics, training-plan, Docker dei servizi, PWA.
 
 ## Plans
 - `plan.md` — pronto: 21 task (T01–T21; T21, il guscio nativo, dopo lo scheletro) sequenziali, verificati da due passaggi di revisione indipendente. Decisioni vincolanti in `decisions.md` (DEC-001…DEC-014, tutte confermate dall'utente). Azioni umane previste: `down -v` del volume Postgres (T04), attivare `pnpm` e scaricare i browser di Playwright (T16), approvare le migrazioni (T09, T11).
+
+## Closure
+
+**Result:** Verified
+**Integration:** pull request su GitHub, merge con commit di merge (non squash)
+**Reference:** https://github.com/LucaFerro01/Metrica/pull/1 — merge `aea32c5` su `master`; ramo `feature/walking-skeleton-import` a `2724d52`
+**Verified at:** 2026-11-20, sull'albero di `2724d52` (identico a quello del merge)
+
+### Requirements outcome
+
+| Requirement | Status | Evidence or gap |
+|---|---|---|
+| AC-001 (GPX dal web, elenco e dettaglio) | verified | `GpxImportTests.Ac001`; web `activities.spec`; `real-stack.spec.ts` (Chromium vero, stack vero, 4 passati su desktop); upload provato a mano dall'utente (dichiarato in chat) |
+| AC-002 (FIT con FC e potenza) | verified | `FitImportTests.Ac002` |
+| AC-003 (doppio upload) | verified | `DeduplicationTests.Ac003`, `real-stack.spec.ts` |
+| AC-004 (file non validi, oltre 32 MiB) | verified | `UploadValidationTests`, test web dell'upload |
+| AC-005 (NATS fermo) | verified | `NatsOutageTests` |
+| AC-006 (riconsegna) | verified | `RedeliveryTests` (idempotenza, non una vera riconsegna JetStream: vedi limiti) |
+| AC-007 (isolamento utenti) | verified | `UserIsolationTests`, filtro `externalId` |
+| AC-008 (permessi sui schemi) | verified | `SchemaIsolationTests` |
+| AC-009 (401 fuori da Development) | verified | test non-Development di ingestion e activities |
+| AC-010, AC-011 (API, riduzione dello stream) | verified | test dell'API, `LargeActivityTests` |
+| AC-012 (DLQ) | verified | `DeadLetterTests` |
+| AC-013 (avvio da zero) | verified | clone pulito in T20; ripetuto il 2026-11-20 dopo la rinomina con volumi nuovi `metrica_*`: `scripts/dev.ps1` porta su infrastruttura, servizi e web in circa 60 s, migrazioni applicate, database `metrica` |
+| AC-014 (100.000 punti, evento < 8 MB) | verified | `LargeActivityTests` (50.000, 100.000, 100.001 punti) |
+| Tutti i REQ-* | verified | tabella di copertura del piano e voce T20 di questo file; REQ-034 anche con il rilevatore di log a Trace |
+
+### Verification
+
+- `dotnet build Metrica.slnx -warnaserror` — PASS (0 warning, 0 errori)
+- `dotnet test Metrica.slnx` — PASS: 13 + 61 + 216 + 36 + 305 + 36 + 105 + 379 = 1.151 test
+- `dotnet ef migrations has-pending-model-changes` (ingestion, activities) — PASS (nessuna modifica)
+- `pnpm -C src/web lint`, `tsc -b`, `build` — PASS; `pnpm -C src/web test` — PASS (477 test, 21 file)
+- `pnpm -C src/web test:e2e` — PASS (58 passati, 10 saltati)
+- `E2E_REAL=1 pnpm -C src/web exec playwright test real-stack` — PASS (4 passati; 4 saltati: il progetto «telefono» non li esegue)
+- Avvio da zero con `scripts/dev.ps1` dopo la rinomina — PASS; poi `-Stop -StopInfra`, nessun processo né porta in ascolto, volumi `metrica_*` intatti
+- Revisioni indipendenti dei singoli task, come registrate nelle rispettive voci di questo file — Approved dopo le correzioni
+- Revisione indipendente finale limitata al commit di rinomina `2724d52` (l'unica modifica dopo l'ultima revisione indipendente) — Approved (requisiti, qualità, integrazione), solo lettura
+- Non rieseguito dopo la rinomina: `pnpm gen:api` con `git diff --exit-code` (nessun residuo del vecchio nome nei file generati)
+
+### Known gaps
+
+- None.
+
+Limiti e rischi residui, nessuno su un REQ/AC (non sono lacune accettate): flake non diagnosticato `SchemaTests.UniqueIndex…` di ingestion (visto una volta nella suite completa in parallelo, non riprodotto in 3 esecuzioni isolate più una completa); nessun test di latenza per AC-001; AC-006 è un test di idempotenza; nessuna prova su telefono, con screen reader, Firefox o Safari, Podman, Linux, macOS o PowerShell 7; nessun upload reale vicino a 32 MiB. I dettagli sono nelle voci «Limiti noti» di T11–T19 e nella voce T20.
+
+### Deviations
+
+- T21 (guscio Capacitor, DEC-015) spostato fuori dalla feature con approvazione dell'utente: lavoro futuro dopo `identity`.
+- Rinomina del progetto da TriMetric a Metrica (voce del 2026-11-20): nessuna deviazione da `DEC-*`.
+- Nessuna altra deviazione da DEC-001…DEC-015 oltre a quelle già registrate per task.
+
+### Resources
+
+- Removed: nessuno. Lo stack avviato per la verifica del 2026-11-20 è stato fermato (container e rete rimossi, volumi `metrica_*` conservati).
+- Preserved: ramo `feature/walking-skeleton-import` (locale e su `origin`, a `2724d52`); volumi Docker `trimetric_*` del vecchio progetto Compose (dati di sviluppo dell'utente, da eliminare solo a sua scelta); nessun worktree collegato.

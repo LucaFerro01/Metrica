@@ -1,0 +1,95 @@
+name: CI
+
+# Verifica minima a ogni push su master e a ogni pull request: build senza warning, test .NET (con i
+# contenitori di Testcontainers, che sui runner GitHub usano il Docker già installato) e controlli del web.
+# Non rigenera i tipi OpenAPI (`pnpm gen:api`: richiede i servizi avviati) e non esegue `real-stack.spec.ts`
+# (richiede l'intero stack): restano nella verifica locale descritta in docs/getting-started.md.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: .NET (build e test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      # La versione dell'SDK viene da global.json (11.0.100; i progetti puntano a net10.0).
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Ripristina gli strumenti locali
+        run: dotnet tool restore
+
+      - name: Build senza warning
+        run: dotnet build Metrica.slnx -warnaserror
+
+      - name: Test
+        run: dotnet test Metrica.slnx --no-build --logger "trx;LogFileName=results.trx" --results-directory TestResults
+
+      - name: Salva i risultati dei test
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: risultati-test-dotnet
+          path: TestResults/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  web:
+    name: Web (lint, test, build, e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: src/web
+    steps:
+      - uses: actions/checkout@v4
+
+      # La versione di pnpm viene dal campo packageManager di package.json.
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: src/web/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: src/web/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      # `build` esegue già `tsc -b` prima di Vite.
+      - run: pnpm build
+
+      - run: pnpm test
+
+      - name: Scarica il browser di Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Test end-to-end (con chiamate API intercettate)
+        run: pnpm test:e2e
+
+      - name: Salva i risultati di Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: risultati-playwright
+          path: src/web/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
